@@ -217,3 +217,4 @@ app.on('before-quit', () => {
 // v1.1 — tray: added after someone asked for it in issues
 // keeping this separate so it's easy to rip out if needed
 // window state persistence added 11am
+// setWindowOpenHandler added — was opening new electron windows before, yikes
