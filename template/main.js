@@ -1,172 +1,242 @@
+// main.js — electron entry point
+// TODO: add auto-updater (electron-updater) — people keep asking
+// TODO: keyboard shortcut to toggle toolbar visibility
+// TODO: per-app zoom level persistence
+
 'use strict'
 
 const {
   app, BrowserWindow, Menu, shell,
-  ipcMain, Tray, nativeImage, screen
+  ipcMain, Tray, nativeImage, screen, session
 } = require('electron')
 const path = require('path')
-const fs = require('fs')
+const fs   = require('fs')
 
-const config = require('./app-config.json')
+const config = (() => {
+  try {
+    return require('./app-config.json')
+  } catch (e) {
+    // this should never happen in a generated app but just in case
+    console.error('FATAL: could not load app-config.json —', e.message)
+    process.exit(1)
+  }
+})()
 
-// where we stash window size/position between sessions
-const STATE_FILE = path.join(app.getPath('userData'), 'window-state.json')
+const STATE_PATH   = path.join(app.getPath('userData'), 'window-state.json')
+const BLOCKED_PATH = path.join(__dirname, 'blocked-domains.json')
 
-let mainWindow = null
+let win  = null
 let tray = null
 
 // ─── window state ────────────────────────────────────────────────────────────
 
-function loadWindowState() {
+function readState() {
   try {
-    return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'))
+    return JSON.parse(fs.readFileSync(STATE_PATH, 'utf8'))
   } catch {
-    return {}
+    return {}  // first run or corrupted — start fresh
   }
 }
 
-function saveWindowState(win) {
+function writeState() {
   if (!win || win.isMinimized() || win.isMaximized()) return
-  const bounds = win.getBounds()
-  fs.writeFileSync(STATE_FILE, JSON.stringify(bounds))
+  try {
+    fs.writeFileSync(STATE_PATH, JSON.stringify(win.getBounds()))
+  } catch {
+    // not critical — worst case they lose window position
+  }
 }
 
-// ─── create window ───────────────────────────────────────────────────────────
+// check the saved position is still on a connected monitor
+// happens a lot with multi-monitor setups when you unplug one
+function isOnScreen(x, y) {
+  if (x == null || y == null) return false
+  return screen.getAllDisplays().some(d =>
+    x >= d.bounds.x && x < d.bounds.x + d.bounds.width &&
+    y >= d.bounds.y && y < d.bounds.y + d.bounds.height
+  )
+}
+
+// ─── ad blocking ─────────────────────────────────────────────────────────────
+
+function setupAdBlocking() {
+  if (!config.blockAds) return
+
+  let blocked = []
+  try {
+    blocked = JSON.parse(fs.readFileSync(BLOCKED_PATH, 'utf8'))
+  } catch {
+    return  // no blocklist file — skip silently
+  }
+
+  // intercept requests and kill ones matching blocked domains
+  session.defaultSession.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, cb) => {
+    try {
+      const hostname = new URL(details.url).hostname
+      const isBlocked = blocked.some(d => hostname === d || hostname.endsWith('.' + d))
+      cb({ cancel: isBlocked })
+    } catch {
+      cb({ cancel: false })
+    }
+  })
+}
+
+// ─── dark mode injection ──────────────────────────────────────────────────────
+
+// crude but effective — inverts the page and re-inverts images/videos
+// not perfect for every site but good enough for most
+const DARK_CSS = `
+html { filter: invert(1) hue-rotate(180deg) !important; }
+img, video, canvas, iframe, [style*="background-image"] {
+  filter: invert(1) hue-rotate(180deg) !important;
+}
+`
+
+// ─── create window ────────────────────────────────────────────────────────────
 
 function createWindow() {
-  const saved = config.rememberSize ? loadWindowState() : {}
-
-  // make sure the saved position is still on a visible screen
-  const displays = screen.getAllDisplays()
-  let x = saved.x, y = saved.y
-  if (x !== undefined && y !== undefined) {
-    const onScreen = displays.some(d =>
-      x >= d.bounds.x && x < d.bounds.x + d.bounds.width &&
-      y >= d.bounds.y && y < d.bounds.y + d.bounds.height
-    )
-    if (!onScreen) { x = undefined; y = undefined }
-  }
-
+  const saved    = config.rememberSize ? readState() : {}
   const isFrameless = config.windowStyle === 'frameless'
 
-  mainWindow = new BrowserWindow({
-    width: saved.width || config.width,
-    height: saved.height || config.height,
+  // don't restore to a monitor that's no longer plugged in
+  const x = isOnScreen(saved.x, saved.y) ? saved.x : undefined
+  const y = isOnScreen(saved.x, saved.y) ? saved.y : undefined
+
+  win = new BrowserWindow({
+    width:  saved.width  || config.width  || 1280,
+    height: saved.height || config.height || 800,
     x, y,
-    minWidth: 320,
-    minHeight: 240,
-    title: config.name,
-    frame: !isFrameless,
-    titleBarStyle: isFrameless ? 'hidden' : 'default',
-    alwaysOnTop: !!config.alwaysOnTop,
-    icon: path.join(__dirname, 'icon.png'),
+    minWidth:  380,
+    minHeight: 300,
+    title:     config.name,
+    icon:      path.join(__dirname, 'icon.png'),
+    frame:     !isFrameless,
+    // hidden title bar on mac so window still drags from top
+    titleBarStyle: process.platform === 'darwin' && isFrameless ? 'hiddenInset' : 'default',
+    alwaysOnTop:   !!config.alwaysOnTop,
     backgroundColor: '#ffffff',
-    show: false,
+    show: false,  // show after content loads — avoids white flash
     webPreferences: {
-      nodeIntegration: false,
+      nodeIntegration:  false,
       contextIsolation: true,
-      webviewTag: true,
-      preload: path.join(__dirname, 'preload.js')
+      webviewTag:       true,
+      preload: path.join(__dirname, 'preload.js'),
+      // TODO: evaluate if spellcheck should be configurable
+      spellcheck: true
     }
   })
 
-  mainWindow.loadFile(path.join(__dirname, 'app.html'))
+  win.loadFile(path.join(__dirname, 'app.html'))
 
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show()
-    if (saved.maximized) mainWindow.maximize()
+  win.once('ready-to-show', () => {
+    win.show()
+    if (saved.maximized) win.maximize()
   })
 
-  // remember size on close
-  mainWindow.on('close', (e) => {
-    if (config.systemTray && !app.isQuiting) {
+  win.on('close', e => {
+    // tray mode — hide instead of actually closing
+    if (config.systemTray && !app._quitting) {
       e.preventDefault()
-      mainWindow.hide()
+      win.hide()
       return
     }
-    if (config.rememberSize) saveWindowState(mainWindow)
+    if (config.rememberSize) writeState()
   })
 
-  mainWindow.on('closed', () => { mainWindow = null })
+  win.on('closed', () => { win = null })
 
-  // open external links in the default browser, not a new electron window
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (url !== config.url && !url.startsWith(new URL(config.url).origin)) {
-      shell.openExternal(url)
+  // links to other origins → open in browser, not a new electron window
+  // without this you end up with a mess of windows for oauth flows etc
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    try {
+      const appOrigin  = new URL(config.url).origin
+      const linkOrigin = new URL(url).origin
+      if (linkOrigin !== appOrigin) {
+        shell.openExternal(url)
+        return { action: 'deny' }
+      }
+    } catch {
+      // malformed url — just deny it
       return { action: 'deny' }
     }
     return { action: 'allow' }
   })
 
+  // inject dark mode css into every page if enabled
+  if (config.darkMode) {
+    win.webContents.on('did-finish-load', () => {
+      win.webContents.insertCSS(DARK_CSS).catch(() => {})
+    })
+  }
+
   buildMenu()
 }
 
-// ─── system tray ─────────────────────────────────────────────────────────────
+// ─── tray ────────────────────────────────────────────────────────────────────
 
-function createTray() {
+function setupTray() {
   if (!config.systemTray) return
 
-  const iconPath = path.join(__dirname, 'icon.png')
-  const img = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 })
-  tray = new Tray(img)
-  tray.setToolTip(config.name)
-
-  const menu = Menu.buildFromTemplate([
-    { label: `Open ${config.name}`, click: () => { mainWindow?.show() } },
-    { type: 'separator' },
-    { label: 'Quit', click: () => { app.isQuiting = true; app.quit() } }
-  ])
-  tray.setContextMenu(menu)
-  tray.on('click', () => {
-    if (mainWindow?.isVisible()) mainWindow.hide()
-    else mainWindow?.show()
-  })
+  try {
+    const img = nativeImage.createFromPath(path.join(__dirname, 'icon.png'))
+      .resize({ width: 16, height: 16 })
+    tray = new Tray(img)
+    tray.setToolTip(config.name)
+    tray.setContextMenu(Menu.buildFromTemplate([
+      { label: 'Show ' + config.name, click: () => win?.show() },
+      { type: 'separator' },
+      { label: 'Quit', click: () => { app._quitting = true; app.quit() } }
+    ]))
+    tray.on('click', () => win?.isVisible() ? win.hide() : win?.show())
+  } catch (e) {
+    // tray can fail on some linux setups (no systray support) — not fatal
+    console.warn('tray setup failed:', e.message)
+  }
 }
 
 // ─── menu ─────────────────────────────────────────────────────────────────────
 
 function buildMenu() {
-  const isMac = process.platform === 'darwin'
+  const mac = process.platform === 'darwin'
 
-  const template = [
-    ...(isMac ? [{ label: app.name, submenu: [{ role: 'about' }, { type: 'separator' }, { role: 'hide' }, { role: 'hideOthers' }, { type: 'separator' }, { role: 'quit' }] }] : []),
+  const tpl = [
+    ...(mac ? [{
+      label: app.name,
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { type: 'separator' },
+        { role: 'quit' }
+      ]
+    }] : []),
     {
       label: 'File',
-      submenu: [isMac ? { role: 'close' } : { role: 'quit' }]
+      submenu: [mac ? { role: 'close' } : { role: 'quit' }]
     },
     {
       label: 'Edit',
       submenu: [
-        { role: 'undo' }, { role: 'redo' }, { type: 'separator' },
-        { role: 'cut' }, { role: 'copy' }, { role: 'paste' },
-        { role: 'selectAll' }
+        { role: 'undo' }, { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' }
       ]
     },
     {
       label: 'View',
       submenu: [
-        {
-          label: 'Back',
-          accelerator: 'Alt+Left',
-          click: () => mainWindow?.webContents.send('navigate', 'back')
-        },
-        {
-          label: 'Forward',
-          accelerator: 'Alt+Right',
-          click: () => mainWindow?.webContents.send('navigate', 'forward')
-        },
-        {
-          label: 'Home',
-          accelerator: 'CmdOrCtrl+H',
-          click: () => mainWindow?.webContents.send('navigate', 'home')
-        },
+        { label: 'Back',    accelerator: 'Alt+Left',  click: () => win?.webContents.send('nav', 'back') },
+        { label: 'Forward', accelerator: 'Alt+Right', click: () => win?.webContents.send('nav', 'forward') },
+        { label: 'Home',    accelerator: 'CmdOrCtrl+Shift+H', click: () => win?.webContents.send('nav', 'home') },
         { type: 'separator' },
         { role: 'reload' },
-        { role: 'togglefullscreen' },
+        { role: 'forceReload' },
         { type: 'separator' },
-        { role: 'zoomIn' },
-        { role: 'zoomOut' },
-        { role: 'resetZoom' },
+        { role: 'togglefullscreen' },
+        { role: 'zoomIn' }, { role: 'zoomOut' }, { role: 'resetZoom' },
         { type: 'separator' },
         { role: 'toggleDevTools' }
       ]
@@ -174,49 +244,52 @@ function buildMenu() {
     {
       label: 'Help',
       submenu: [
-        {
-          label: 'Open in Browser',
-          click: () => shell.openExternal(config.url)
-        }
+        { label: 'Open in Browser', click: () => shell.openExternal(config.url) },
+        { label: 'Clear Cache & Reload', click: clearCacheAndReload }
       ]
     }
   ]
 
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+  Menu.setApplicationMenu(Menu.buildFromTemplate(tpl))
 }
 
-// ─── IPC ─────────────────────────────────────────────────────────────────────
+async function clearCacheAndReload() {
+  try {
+    await session.defaultSession.clearCache()
+    await session.defaultSession.clearStorageData({ storages: ['cookies', 'localstorage', 'sessionstorage'] })
+    win?.webContents.send('nav', 'home')
+  } catch (e) {
+    console.error('cache clear failed:', e.message)
+  }
+}
+
+// ─── ipc ─────────────────────────────────────────────────────────────────────
 
 ipcMain.handle('get-config', () => config)
 
 ipcMain.on('open-external', (_, url) => {
-  shell.openExternal(url)
+  shell.openExternal(url).catch(e => console.warn('open-external failed:', e.message))
 })
 
-// ─── app lifecycle ────────────────────────────────────────────────────────────
+// ─── lifecycle ────────────────────────────────────────────────────────────────
 
 app.whenReady().then(() => {
+  setupAdBlocking()
   createWindow()
-  createTray()
+  setupTray()
 })
 
 app.on('window-all-closed', () => {
+  // on mac apps usually stay alive until cmd+q — match that behavior
   if (process.platform !== 'darwin') app.quit()
 })
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  else mainWindow?.show()
+  if (!win) createWindow()
+  else win.show()
 })
 
 app.on('before-quit', () => {
-  app.isQuiting = true
-  if (config.rememberSize && mainWindow) saveWindowState(mainWindow)
+  app._quitting = true
+  if (config.rememberSize && win) writeState()
 })
-
-// v1.1 — tray: added after someone asked for it in issues
-// keeping this separate so it's easy to rip out if needed
-// window state persistence added 11am
-// setWindowOpenHandler added — was opening new electron windows before, yikes
-// macOS menu: added About, Hide, Quit to app menu
-// screen bounds check — was placing window off-screen on single monitor setups

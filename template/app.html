@@ -3,317 +3,317 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Loading…</title>
+  <title>loading...</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* TODO: let users pick accent color in config */
     :root {
-      --bg: #1a1a2e;
-      --surface: #16213e;
-      --border: #0f3460;
-      --accent: #e94560;
-      --text: #eaeaea;
-      --muted: #888;
-      --toolbar-h: 40px;
-      --radius: 6px;
+      --bg:      #111118;
+      --surface: #1a1a24;
+      --border:  #2a2a3a;
+      --accent:  #7c6aff;
+      --text:    #e8e8f0;
+      --muted:   #666680;
+      --bar-h:   42px;
+      --r:       5px;
     }
 
     html, body {
       height: 100%;
       overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13px;
     }
 
     /* ── toolbar ── */
-    #toolbar {
+    #bar {
+      height: var(--bar-h);
       display: flex;
       align-items: center;
-      gap: 5px;
-      padding: 4px 8px;
-      height: var(--toolbar-h);
+      gap: 4px;
+      padding: 0 8px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       -webkit-app-region: drag;
-      user-select: none;
+      flex-shrink: 0;
     }
+    #bar.hidden { display: none !important; }
 
-    #toolbar.hidden { display: none; }
+    /* bit of left padding on mac so traffic lights don't overlap */
+    body.mac #bar { padding-left: 76px; }
 
     .btn {
       -webkit-app-region: no-drag;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      border: none;
-      border-radius: var(--radius);
-      background: transparent;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 15px;
-      transition: background 0.12s, color 0.12s;
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      border: none; border-radius: var(--r);
+      background: transparent; color: var(--muted);
+      cursor: pointer; font-size: 14px;
+      transition: background 0.1s, color 0.1s;
       flex-shrink: 0;
+      user-select: none;
     }
-    .btn:hover { background: var(--border); color: var(--text); }
-    .btn:active { transform: scale(0.93); }
-    .btn:disabled { opacity: 0.3; pointer-events: none; }
+    .btn:hover  { background: var(--border); color: var(--text); }
+    .btn:active { transform: scale(0.9); }
+    .btn:disabled { opacity: 0.25; pointer-events: none; }
 
-    #url-wrap {
+    /* url bar */
+    #urlwrap {
       -webkit-app-region: no-drag;
       flex: 1;
-      display: flex;
-      align-items: center;
+      display: flex; align-items: center; gap: 6px;
+      height: 28px; padding: 0 10px;
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 0 8px;
-      height: 26px;
-      gap: 5px;
+      border-radius: 14px;
       transition: border-color 0.15s;
+      min-width: 0;
     }
-    #url-wrap:focus-within { border-color: var(--accent); }
+    #urlwrap:focus-within { border-color: var(--accent); }
 
-    #favicon {
-      width: 14px;
-      height: 14px;
-      object-fit: contain;
-      flex-shrink: 0;
-      opacity: 0.8;
+    #fav {
+      width: 14px; height: 14px;
+      object-fit: contain; flex-shrink: 0;
+      border-radius: 2px;
+      opacity: 0.75;
     }
 
-    #url-input {
-      flex: 1;
-      background: none;
-      border: none;
-      outline: none;
-      color: var(--text);
-      font-size: 12px;
+    #urlinput {
+      flex: 1; min-width: 0;
+      background: none; border: none; outline: none;
+      color: var(--text); font-size: 12px;
       font-family: inherit;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
 
-    /* ── progress bar ── */
+    /* ── progress ── */
     #progress {
-      position: fixed;
-      top: 0;
-      left: 0;
-      height: 2px;
-      width: 0;
+      position: fixed; top: 0; left: 0;
+      height: 2px; width: 0;
       background: var(--accent);
-      transition: width 0.25s ease, opacity 0.3s;
-      z-index: 999;
-      pointer-events: none;
+      transition: width 0.2s ease, opacity 0.35s;
+      z-index: 9999; pointer-events: none;
+      box-shadow: 0 0 8px var(--accent);
     }
-    #progress.done { opacity: 0; }
+    #progress.idle { opacity: 0; }
 
     /* ── webview ── */
-    webview {
+    #wv {
       display: flex;
       width: 100%;
-      height: calc(100vh - var(--toolbar-h));
+      /* height set by js depending on toolbar visibility */
       border: none;
     }
-    webview.no-toolbar { height: 100vh; }
 
-    /* ── overlay for frameless drag ── */
-    #drag-region {
+    /* ── frameless drag zone ── */
+    #dragzone {
       display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 28px;
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 32px;
       -webkit-app-region: drag;
-      z-index: 100;
-      pointer-events: none;
+      z-index: 100; pointer-events: none;
     }
-    body.frameless #drag-region { display: block; }
-    body.frameless webview { height: 100vh; }
+    body.frameless #dragzone { display: block; }
+    /* mac inset — avoid traffic lights area */
+    body.frameless.mac #dragzone { left: 70px; }
 
-    /* ── loading splash ── */
+    /* ── splash ── */
     #splash {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg);
-      z-index: 50;
-      gap: 14px;
-      transition: opacity 0.3s;
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: var(--bg); z-index: 50;
+      gap: 16px;
+      transition: opacity 0.25s;
     }
-    #splash.hidden { opacity: 0; pointer-events: none; }
+    #splash.gone { opacity: 0; pointer-events: none; }
 
-    .spinner {
-      width: 32px;
-      height: 32px;
-      border: 3px solid var(--border);
+    #splash-name { color: var(--muted); font-size: 13px; letter-spacing: 0.03em; }
+
+    .ring {
+      width: 28px; height: 28px;
+      border: 2px solid var(--border);
       border-top-color: var(--accent);
       border-radius: 50%;
-      animation: spin 0.7s linear infinite;
+      animation: spin 0.65s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    #splash-label { color: var(--muted); font-size: 13px; }
+    /* ── offline banner ── */
+    #offline {
+      display: none;
+      position: fixed; top: var(--bar-h); left: 0; right: 0;
+      padding: 8px 14px;
+      background: #c0392b;
+      color: #fff; font-size: 12px;
+      text-align: center; z-index: 40;
+    }
+    #offline.show { display: block; }
   </style>
 </head>
 <body>
-  <div id="progress"></div>
-  <div id="drag-region"></div>
+  <div id="progress" class="idle"></div>
+  <div id="dragzone"></div>
+  <div id="offline">you're offline — some things might not work</div>
 
-  <!-- loading splash -->
-  <div id="splash">
-    <div class="spinner"></div>
-    <span id="splash-label">Loading…</span>
-  </div>
-
-  <div id="toolbar">
-    <button class="btn" id="btn-back"    title="Back (Alt+←)">&#8592;</button>
-    <button class="btn" id="btn-forward" title="Forward (Alt+→)">&#8594;</button>
-    <button class="btn" id="btn-reload"  title="Reload">&#8635;</button>
-
-    <div id="url-wrap">
-      <img id="favicon" src="" alt="" onerror="this.style.display='none'" />
-      <input id="url-input" type="text" spellcheck="false" autocomplete="off" />
+  <div id="bar">
+    <button class="btn" id="back"    title="Back">&#8592;</button>
+    <button class="btn" id="fwd"     title="Forward">&#8594;</button>
+    <button class="btn" id="reload"  title="Reload">&#8635;</button>
+    <div id="urlwrap">
+      <img id="fav" src="" alt="" />
+      <input id="urlinput" type="text" spellcheck="false" autocomplete="off" />
     </div>
-
-    <button class="btn" id="btn-home"  title="Home">&#8962;</button>
+    <button class="btn" id="home" title="Home">&#8962;</button>
   </div>
 
   <webview id="wv" allowpopups partition="persist:web2app"></webview>
 
+  <div id="splash">
+    <div class="ring"></div>
+    <div id="splash-name">loading...</div>
+  </div>
+
   <script>
     const api = window.electronAPI
+    let cfg = {}
 
-    let config = {}
-    let homeUrl = ''
-    const wv      = document.getElementById('wv')
-    const toolbar  = document.getElementById('toolbar')
-    const urlInput = document.getElementById('url-input')
-    const faviconEl = document.getElementById('favicon')
-    const progress  = document.getElementById('progress')
-    const splash    = document.getElementById('splash')
-    const splashLabel = document.getElementById('splash-label')
+    const wv       = document.getElementById('wv')
+    const bar      = document.getElementById('bar')
+    const urlinput = document.getElementById('urlinput')
+    const fav      = document.getElementById('fav')
+    const progress = document.getElementById('progress')
+    const splash   = document.getElementById('splash')
+    const offline  = document.getElementById('offline')
 
-    async function init() {
-      config  = await api.getConfig()
-      homeUrl = config.url
+    async function boot() {
+      cfg = await api.getConfig()
 
-      document.title = config.name
-      splashLabel.textContent = `Loading ${config.name}…`
+      document.title = cfg.name
+      document.getElementById('splash-name').textContent = cfg.name
 
-      if (!config.showToolbar || config.windowStyle === 'frameless') {
-        toolbar.classList.add('hidden')
-        wv.classList.add('no-toolbar')
-      }
+      // platform class for mac-specific layout tweaks
+      if (navigator.userAgent.includes('Mac')) document.body.classList.add('mac')
+      if (cfg.windowStyle === 'frameless') document.body.classList.add('frameless')
 
-      if (config.windowStyle === 'frameless') {
-        document.body.classList.add('frameless')
-      }
+      // toolbar visibility
+      const showBar = cfg.showToolbar && cfg.windowStyle !== 'frameless'
+      if (!showBar) bar.classList.add('hidden')
 
-      // inject custom CSS if provided
-      if (config.customCSS && config.customCSS.trim()) {
+      // set webview height — fills remaining space
+      wv.style.height = showBar ? `calc(100vh - ${getComputedStyle(document.documentElement).getPropertyValue('--bar-h')})` : '100vh'
+
+      wv.src = cfg.url
+      urlinput.value = cfg.url
+
+      // inject custom css on every page load if configured
+      if (cfg.customCSS && cfg.customCSS.trim()) {
         wv.addEventListener('dom-ready', () => {
-          wv.insertCSS(config.customCSS).catch(() => {})
-        }, { once: false })
+          wv.insertCSS(cfg.customCSS).catch(() => {})
+        })
       }
 
-      wv.src = homeUrl
-      urlInput.value = homeUrl
-
-      bindEvents()
-      bindNavIPC()
+      wireEvents()
+      wireIpc()
+      watchOffline()
     }
 
-    function bindEvents() {
-      document.getElementById('btn-back').onclick    = () => wv.canGoBack()    && wv.goBack()
-      document.getElementById('btn-forward').onclick = () => wv.canGoForward() && wv.goForward()
-      document.getElementById('btn-reload').onclick  = () => wv.reload()
-      document.getElementById('btn-home').onclick    = () => navigateTo(homeUrl)
+    function wireEvents() {
+      document.getElementById('back').onclick   = () => wv.canGoBack()    && wv.goBack()
+      document.getElementById('fwd').onclick    = () => wv.canGoForward() && wv.goForward()
+      document.getElementById('reload').onclick = () => wv.reload()
+      document.getElementById('home').onclick   = () => go(cfg.url)
 
-      urlInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') navigateTo(urlInput.value)
-        if (e.key === 'Escape') { urlInput.value = wv.getURL(); urlInput.blur() }
+      urlinput.addEventListener('keydown', e => {
+        if (e.key === 'Enter')  go(urlinput.value)
+        if (e.key === 'Escape') { urlinput.value = wv.getURL(); urlinput.blur() }
       })
+      // select all text when focused — easier to replace url
+      urlinput.addEventListener('focus', () => urlinput.select())
 
-      // progress bar
+      // progress
       wv.addEventListener('did-start-loading', () => {
-        progress.style.width = '35%'
-        progress.classList.remove('done')
+        progress.style.width = '30%'
+        progress.classList.remove('idle')
       })
       wv.addEventListener('did-stop-loading', () => {
         progress.style.width = '100%'
-        setTimeout(() => progress.classList.add('done'), 350)
-        splash.classList.add('hidden')
-        updateButtons()
+        setTimeout(() => progress.classList.add('idle'), 400)
+        splash.classList.add('gone')
+        syncButtons()
       })
 
-      // sync URL bar
-      wv.addEventListener('did-navigate', e => {
-        urlInput.value = e.url
-        updateFavicon(e.url)
-        updateButtons()
-      })
-      wv.addEventListener('did-navigate-in-page', e => {
-        if (e.isMainFrame) { urlInput.value = e.url; updateButtons() }
-      })
+      // keep url bar in sync
+      wv.addEventListener('did-navigate',         e => { urlinput.value = e.url; updateFav(e.url); syncButtons() })
+      wv.addEventListener('did-navigate-in-page', e => { if (e.isMainFrame) { urlinput.value = e.url; syncButtons() } })
 
-      // page title → window title
+      // window title tracks page title
       wv.addEventListener('page-title-updated', e => {
-        document.title = e.title ? `${e.title} — ${config.name}` : config.name
+        document.title = e.title ? `${e.title} — ${cfg.name}` : cfg.name
       })
 
-      // catch new-window requests and open externally if different origin
+      // handle new-window events — same-origin = allow, external = browser
       wv.addEventListener('new-window', e => {
-        const u = new URL(e.url)
-        const home = new URL(homeUrl)
-        if (u.origin !== home.origin) api.openExternal(e.url)
+        try {
+          const same = new URL(e.url).origin === new URL(cfg.url).origin
+          if (!same) api.openExternal(e.url)
+        } catch { api.openExternal(e.url) }
       })
     }
 
-    function navigateTo(raw) {
-      let url = raw.trim()
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        // looks like a search query
-        if (!url.includes('.') || url.includes(' ')) {
-          url = 'https://www.google.com/search?q=' + encodeURIComponent(url)
-        } else {
-          url = 'https://' + url
-        }
+    // smart navigation — handles bare domains and search queries
+    function go(raw) {
+      let url = (raw || '').trim()
+      if (!url) return
+
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        // fine as-is
+      } else if (url.includes('.') && !url.includes(' ')) {
+        url = 'https://' + url
+      } else {
+        // treat as search query
+        url = 'https://www.google.com/search?q=' + encodeURIComponent(url)
       }
+
       wv.src = url
-      urlInput.value = url
+      urlinput.value = url
     }
 
-    function updateButtons() {
-      document.getElementById('btn-back').disabled    = !wv.canGoBack()
-      document.getElementById('btn-forward').disabled = !wv.canGoForward()
+    function syncButtons() {
+      document.getElementById('back').disabled = !wv.canGoBack()
+      document.getElementById('fwd').disabled  = !wv.canGoForward()
     }
 
-    function updateFavicon(url) {
+    function updateFav(url) {
       try {
-        const origin = new URL(url).origin
-        faviconEl.src = `${origin}/favicon.ico`
-        faviconEl.style.display = 'block'
-      } catch { faviconEl.style.display = 'none' }
+        fav.src = new URL(url).origin + '/favicon.ico'
+        fav.style.display = 'block'
+      } catch {
+        fav.style.display = 'none'
+      }
     }
 
-    function bindNavIPC() {
+    function wireIpc() {
       api.onNavigate(action => {
-        if (action === 'back')    wv.canGoBack()    && wv.goBack()
-        if (action === 'forward') wv.canGoForward() && wv.goForward()
-        if (action === 'home')    navigateTo(homeUrl)
+        if (action === 'back')    { wv.canGoBack()    && wv.goBack() }
+        if (action === 'forward') { wv.canGoForward() && wv.goForward() }
+        if (action === 'home')    { go(cfg.url) }
       })
     }
 
-    init().catch(console.error)
+    function watchOffline() {
+      window.addEventListener('offline',  () => offline.classList.add('show'))
+      window.addEventListener('online',   () => offline.classList.remove('show'))
+    }
+
+    boot().catch(err => {
+      // something went wrong before the page even loaded — show it
+      console.error('boot failed:', err)
+      document.getElementById('splash-name').textContent = 'failed to load — check console'
+    })
   </script>
 </body>
 </html>
-/* frameless/immersive window mode — Pake-inspired */
-// CSS injection via wv.insertCSS — runs on every dom-ready
-// favicon img in url bar — small touch but makes it feel real
-// navigateTo() now handles bare domains and search queries
-<!-- splash screen added — looked janky without it -->
-// page-title-updated: appending site name after pipe

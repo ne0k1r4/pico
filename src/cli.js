@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
-'use strict'
+// TODO: add a --config flag so people can pass a json file instead of answering prompts
+// TODO: maybe add a --yes flag to just use defaults for everything
+// TODO: support pasting a list of urls and bulk generating apps?? could be useful
 
 const inquirer = require('inquirer')
 const chalk = require('chalk')
@@ -9,43 +11,49 @@ const fs = require('fs-extra')
 const { generateApp } = require('./generator')
 const { validateUrl, fetchFavicon } = require('./utils')
 
-// had to add this because people kept putting bare domains lol
-function normalizeUrl(input) {
-  let url = input.trim()
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    url = 'https://' + url
-  }
-  return url
+// people keep pasting bare domains, just fix it silently
+function fixUrl(raw) {
+  let u = (raw || '').trim()
+  if (!u) return u
+  if (!u.startsWith('http://') && !u.startsWith('https://')) u = 'https://' + u
+  return u
 }
 
-async function main() {
+function printBanner() {
   console.log()
-  console.log(chalk.bold('  web2app') + chalk.gray(' — wrap any site as a native app'))
-  console.log(chalk.gray('  ─────────────────────────────────'))
+  console.log('  ' + chalk.bold.white('web2app') + chalk.gray(' · any website → native desktop app'))
+  console.log('  ' + chalk.gray('─'.repeat(40)))
   console.log()
+}
 
-  const answers = await inquirer.prompt([
+async function askQuestions() {
+  return inquirer.prompt([
     {
       type: 'input',
       name: 'url',
-      message: 'Website URL:',
-      validate: async (val) => {
-        const url = normalizeUrl(val)
-        const ok = await validateUrl(url)
-        return ok ? true : 'Could not reach that URL — double check it?'
-      },
-      filter: normalizeUrl
+      message: 'URL of the website:',
+      filter: fixUrl,
+      validate: async val => {
+        if (!val) return 'need a url bro'
+        const alive = await validateUrl(val).catch(() => false)
+        // not blocking on this — maybe they're offline, maybe its a local server
+        // just warn and let them continue
+        if (!alive) {
+          console.log(chalk.yellow('\n  ⚠ could not reach that url — continuing anyway'))
+        }
+        return true
+      }
     },
     {
       type: 'input',
       name: 'name',
       message: 'App name:',
-      validate: v => v.trim().length >= 1 ? true : 'Give it a name!'
+      validate: v => v.trim() ? true : 'give it a name lol'
     },
     {
       type: 'input',
       name: 'outputDir',
-      message: 'Where to save the project?',
+      message: 'Output folder:',
       default: './apps'
     },
     {
@@ -53,112 +61,141 @@ async function main() {
       name: 'windowStyle',
       message: 'Window style:',
       choices: [
-        { name: 'Normal (with title bar)', value: 'normal' },
-        { name: 'Frameless (immersive, no title bar)', value: 'frameless' },
-        { name: 'Minimal (thin toolbar only)', value: 'minimal' }
+        { name: 'Normal  — standard title bar', value: 'normal' },
+        { name: 'Frameless — no title bar, feels native', value: 'frameless' },
+        { name: 'Minimal — just a thin nav strip', value: 'minimal' }
       ],
       default: 'normal'
     },
     {
       type: 'confirm',
       name: 'showToolbar',
-      message: 'Show navigation bar (back/forward/URL)?',
+      message: 'Show nav toolbar (back / forward / url bar)?',
       default: true,
-      when: ans => ans.windowStyle !== 'frameless'
+      when: a => a.windowStyle !== 'frameless'
     },
     {
       type: 'confirm',
       name: 'systemTray',
-      message: 'Add system tray icon (minimize to tray)?',
+      message: 'Minimize to system tray instead of closing?',
       default: false
     },
     {
       type: 'confirm',
       name: 'alwaysOnTop',
-      message: 'Keep window always on top?',
+      message: 'Always on top?',
+      default: false
+    },
+    {
+      type: 'confirm',
+      name: 'darkMode',
+      message: 'Force dark mode on the site? (injects dark CSS)',
       default: false
     },
     {
       type: 'confirm',
       name: 'injectCSS',
-      message: 'Inject custom CSS? (useful to hide ads, tweak UI)',
+      message: 'Inject custom CSS?',
       default: false
     },
     {
-      type: 'editor',
+      type: 'input',
       name: 'customCSS',
-      message: 'Enter your custom CSS:',
-      default: '/* your custom styles here */\n',
-      when: ans => ans.injectCSS
+      message: 'Paste your CSS (one line, use \\n for newlines):',
+      when: a => a.injectCSS,
+      default: '* { font-family: sans-serif; }'
+    },
+    {
+      type: 'confirm',
+      name: 'blockAds',
+      message: 'Block common ad/tracker domains?',
+      default: false
     },
     {
       type: 'number',
       name: 'width',
-      message: 'Default window width:',
+      message: 'Window width:',
       default: 1280
     },
     {
       type: 'number',
       name: 'height',
-      message: 'Default window height:',
+      message: 'Window height:',
       default: 800
     },
     {
       type: 'confirm',
       name: 'rememberSize',
-      message: 'Remember window position & size between sessions?',
+      message: 'Remember window size & position?',
       default: true
     },
     {
       type: 'confirm',
       name: 'fetchIcon',
-      message: 'Try to fetch favicon automatically?',
+      message: 'Try to grab favicon from the site?',
       default: true
     },
     {
       type: 'checkbox',
       name: 'platforms',
-      message: 'Build targets:',
+      message: 'Build for:',
       choices: [
-        { name: 'Windows (.exe)', value: 'win', checked: process.platform === 'win32' },
-        { name: 'macOS (.dmg)', value: 'mac', checked: process.platform === 'darwin' },
-        { name: 'Linux (.AppImage + .deb)', value: 'linux', checked: process.platform === 'linux' }
+        { name: 'Windows  (.exe)', value: 'win',   checked: process.platform === 'win32' },
+        { name: 'macOS    (.dmg)', value: 'mac',   checked: process.platform === 'darwin' },
+        { name: 'Linux    (.AppImage + .deb)', value: 'linux', checked: process.platform === 'linux' }
       ],
-      validate: v => v.length > 0 ? true : 'Pick at least one'
+      validate: v => v.length ? true : 'pick at least one platform'
     }
   ])
+}
+
+async function main() {
+  printBanner()
+
+  let answers
+  try {
+    answers = await askQuestions()
+  } catch (err) {
+    // ctrl+c during prompts
+    if (err.isTtyError || err.message?.includes('force closed')) {
+      console.log(chalk.gray('\n  cancelled'))
+      process.exit(0)
+    }
+    throw err
+  }
 
   console.log()
-  console.log(chalk.cyan('  generating your app...'))
+  console.log(chalk.cyan('  building...'))
 
-  // try to grab the favicon in the background — not a dealbreaker if it fails
+  // try to grab favicon — silent fail is fine here
   let faviconPath = null
   if (answers.fetchIcon) {
-    try {
-      console.log(chalk.gray('  fetching favicon...'))
-      faviconPath = await fetchFavicon(answers.url, answers.outputDir, answers.name)
-      if (faviconPath) console.log(chalk.gray('  ✓ favicon saved'))
-    } catch (_) {
-      // silently ignore — placeholder will be used
-    }
+    process.stdout.write(chalk.gray('  fetching favicon... '))
+    faviconPath = await fetchFavicon(answers.url, answers.outputDir, answers.name).catch(() => null)
+    console.log(faviconPath ? chalk.green('got it') : chalk.gray('skipped'))
   }
 
   const result = await generateApp({ ...answers, faviconPath })
 
   console.log()
-  console.log(chalk.green('  ✓ done!'))
+  console.log(chalk.green.bold('  done ✓'))
   console.log()
-  console.log(chalk.bold('  Next steps:'))
-  console.log(chalk.gray(`    cd ${result.dir}`))
-  console.log(chalk.gray('    npm install'))
-  console.log(chalk.gray('    npm start          # run it'))
-  console.log(chalk.gray('    npm run build      # build installer'))
+  console.log(chalk.white('  your app is at:') + ' ' + chalk.cyan(result.dir))
   console.log()
+  console.log(chalk.gray('  cd ' + result.dir))
+  console.log(chalk.gray('  npm install'))
+  console.log(chalk.gray('  npm start        ← run it'))
+  console.log(chalk.gray('  npm run build    ← package into installer'))
+  console.log()
+
+  // TODO: maybe open the folder in finder/explorer automatically?
+  // TODO: auto run npm install in the generated dir if they say yes?
 }
 
 main().catch(err => {
-  console.error(chalk.red('\n  error:'), err.message)
+  // something actually broke — be loud about it
+  console.error(chalk.red.bold('\n  ERROR: ') + err.message)
+  if (process.env.DEBUG) console.error(err.stack)
+  console.error(chalk.gray('  run with DEBUG=1 for full stack trace'))
   process.exit(1)
 })
-// added windowStyle list prompt — normal / frameless / minimal
-// removed a console.log I forgot to take out
