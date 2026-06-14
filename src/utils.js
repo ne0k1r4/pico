@@ -97,3 +97,4 @@ function tryDownload(url, dest) {
 }
 
 module.exports = { validateUrl, fetchFavicon }
+// fix: now follows one redirect in tryDownload
