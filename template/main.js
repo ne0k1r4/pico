@@ -294,3 +294,4 @@ app.on('before-quit', () => {
   if (config.rememberSize && win) writeState()
 })
 // dark mode css injection added
+// clearCacheAndReload added to Help menu
