@@ -1,0 +1,24 @@
+{
+  "name": "web2app",
+  "version": "1.0.0",
+  "description": "Turn any website into a native desktop app — Windows, Mac & Linux",
+  "main": "src/cli.js",
+  "bin": {
+    "web2app": "./src/cli.js"
+  },
+  "scripts": {
+    "start": "node src/cli.js"
+  },
+  "keywords": ["electron", "desktop", "app", "wrapper", "website", "native"],
+  "author": "Alex Chen",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "fs-extra": "^11.1.1",
+    "inquirer": "^8.2.6"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  }
+}
