@@ -114,3 +114,4 @@ async function generateFallbackIcon(outDir, name) {
 }
 
 module.exports = { generateApp }
+// generator updated to pass through new config fields
