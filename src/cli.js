@@ -200,3 +200,4 @@ main().catch(err => {
   process.exit(1)
 })
 // dark mode prompt added
+// block ads prompt
