@@ -115,3 +115,4 @@ async function generateFallbackIcon(outDir, name) {
 
 module.exports = { generateApp }
 // generator updated to pass through new config fields
+// changed flat icon to gradient — looks nicer in dock/taskbar
