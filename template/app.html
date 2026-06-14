@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loading…</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #1a1a2e;
+      --surface: #16213e;
+      --border: #0f3460;
+      --accent: #e94560;
+      --text: #eaeaea;
+      --muted: #888;
+      --toolbar-h: 40px;
+      --radius: 6px;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ── toolbar ── */
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 8px;
+      height: var(--toolbar-h);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      -webkit-app-region: drag;
+      user-select: none;
+    }
+
+    #toolbar.hidden { display: none; }
+
+    .btn {
+      -webkit-app-region: no-drag;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 15px;
+      transition: background 0.12s, color 0.12s;
+      flex-shrink: 0;
+    }
+    .btn:hover { background: var(--border); color: var(--text); }
+    .btn:active { transform: scale(0.93); }
+    .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+    #url-wrap {
+      -webkit-app-region: no-drag;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0 8px;
+      height: 26px;
+      gap: 5px;
+      transition: border-color 0.15s;
+    }
+    #url-wrap:focus-within { border-color: var(--accent); }
+
+    #favicon {
+      width: 14px;
+      height: 14px;
+      object-fit: contain;
+      flex-shrink: 0;
+      opacity: 0.8;
+    }
+
+    #url-input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 12px;
+      font-family: inherit;
+    }
+
+    /* ── progress bar ── */
+    #progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 2px;
+      width: 0;
+      background: var(--accent);
+      transition: width 0.25s ease, opacity 0.3s;
+      z-index: 999;
+      pointer-events: none;
+    }
+    #progress.done { opacity: 0; }
+
+    /* ── webview ── */
+    webview {
+      display: flex;
+      width: 100%;
+      height: calc(100vh - var(--toolbar-h));
+      border: none;
+    }
+    webview.no-toolbar { height: 100vh; }
+
+    /* ── overlay for frameless drag ── */
+    #drag-region {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 28px;
+      -webkit-app-region: drag;
+      z-index: 100;
+      pointer-events: none;
+    }
+    body.frameless #drag-region { display: block; }
+    body.frameless webview { height: 100vh; }
+
+    /* ── loading splash ── */
+    #splash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      z-index: 50;
+      gap: 14px;
+      transition: opacity 0.3s;
+    }
+    #splash.hidden { opacity: 0; pointer-events: none; }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #splash-label { color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div id="progress"></div>
+  <div id="drag-region"></div>
+
+  <!-- loading splash -->
+  <div id="splash">
+    <div class="spinner"></div>
+    <span id="splash-label">Loading…</span>
+  </div>
+
+  <div id="toolbar">
+    <button class="btn" id="btn-back"    title="Back (Alt+←)">&#8592;</button>
+    <button class="btn" id="btn-forward" title="Forward (Alt+→)">&#8594;</button>
+    <button class="btn" id="btn-reload"  title="Reload">&#8635;</button>
+
+    <div id="url-wrap">
+      <img id="favicon" src="" alt="" onerror="this.style.display='none'" />
+      <input id="url-input" type="text" spellcheck="false" autocomplete="off" />
+    </div>
+
+    <button class="btn" id="btn-home"  title="Home">&#8962;</button>
+  </div>
+
+  <webview id="wv" allowpopups partition="persist:web2app"></webview>
+
+  <script>
+    const api = window.electronAPI
+
+    let config = {}
+    let homeUrl = ''
+    const wv      = document.getElementById('wv')
+    const toolbar  = document.getElementById('toolbar')
+    const urlInput = document.getElementById('url-input')
+    const faviconEl = document.getElementById('favicon')
+    const progress  = document.getElementById('progress')
+    const splash    = document.getElementById('splash')
+    const splashLabel = document.getElementById('splash-label')
+
+    async function init() {
+      config  = await api.getConfig()
+      homeUrl = config.url
+
+      document.title = config.name
+      splashLabel.textContent = `Loading ${config.name}…`
+
+      if (!config.showToolbar || config.windowStyle === 'frameless') {
+        toolbar.classList.add('hidden')
+        wv.classList.add('no-toolbar')
+      }
+
+      if (config.windowStyle === 'frameless') {
+        document.body.classList.add('frameless')
+      }
+
+      // inject custom CSS if provided
+      if (config.customCSS && config.customCSS.trim()) {
+        wv.addEventListener('dom-ready', () => {
+          wv.insertCSS(config.customCSS).catch(() => {})
+        }, { once: false })
+      }
+
+      wv.src = homeUrl
+      urlInput.value = homeUrl
+
+      bindEvents()
+      bindNavIPC()
+    }
+
+    function bindEvents() {
+      document.getElementById('btn-back').onclick    = () => wv.canGoBack()    && wv.goBack()
+      document.getElementById('btn-forward').onclick = () => wv.canGoForward() && wv.goForward()
+      document.getElementById('btn-reload').onclick  = () => wv.reload()
+      document.getElementById('btn-home').onclick    = () => navigateTo(homeUrl)
+
+      urlInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') navigateTo(urlInput.value)
+        if (e.key === 'Escape') { urlInput.value = wv.getURL(); urlInput.blur() }
+      })
+
+      // progress bar
+      wv.addEventListener('did-start-loading', () => {
+        progress.style.width = '35%'
+        progress.classList.remove('done')
+      })
+      wv.addEventListener('did-stop-loading', () => {
+        progress.style.width = '100%'
+        setTimeout(() => progress.classList.add('done'), 350)
+        splash.classList.add('hidden')
+        updateButtons()
+      })
+
+      // sync URL bar
+      wv.addEventListener('did-navigate', e => {
+        urlInput.value = e.url
+        updateFavicon(e.url)
+        updateButtons()
+      })
+      wv.addEventListener('did-navigate-in-page', e => {
+        if (e.isMainFrame) { urlInput.value = e.url; updateButtons() }
+      })
+
+      // page title → window title
+      wv.addEventListener('page-title-updated', e => {
+        document.title = e.title ? `${e.title} — ${config.name}` : config.name
+      })
+
+      // catch new-window requests and open externally if different origin
+      wv.addEventListener('new-window', e => {
+        const u = new URL(e.url)
+        const home = new URL(homeUrl)
+        if (u.origin !== home.origin) api.openExternal(e.url)
+      })
+    }
+
+    function navigateTo(raw) {
+      let url = raw.trim()
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        // looks like a search query
+        if (!url.includes('.') || url.includes(' ')) {
+          url = 'https://www.google.com/search?q=' + encodeURIComponent(url)
+        } else {
+          url = 'https://' + url
+        }
+      }
+      wv.src = url
+      urlInput.value = url
+    }
+
+    function updateButtons() {
+      document.getElementById('btn-back').disabled    = !wv.canGoBack()
+      document.getElementById('btn-forward').disabled = !wv.canGoForward()
+    }
+
+    function updateFavicon(url) {
+      try {
+        const origin = new URL(url).origin
+        faviconEl.src = `${origin}/favicon.ico`
+        faviconEl.style.display = 'block'
+      } catch { faviconEl.style.display = 'none' }
+    }
+
+    function bindNavIPC() {
+      api.onNavigate(action => {
+        if (action === 'back')    wv.canGoBack()    && wv.goBack()
+        if (action === 'forward') wv.canGoForward() && wv.goForward()
+        if (action === 'home')    navigateTo(homeUrl)
+      })
+    }
+
+    init().catch(console.error)
+  </script>
+</body>
+</html>
