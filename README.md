@@ -1,114 +1,105 @@
-# pico 🌐
+# pico
 
-> Turn any website into a native desktop app — Windows, macOS & Linux.
+Wraps any website into a desktop app. Works on Windows, Mac, and Linux.
 
-A lightweight CLI tool that wraps any URL into a standalone Electron desktop app. Inspired by [Pake](https://github.com/tw93/Pake), built with a focus on simplicity and not making you think too hard.
-
----
-
-## Features
-
-- **One command** — answer a few questions, get a working app
-- **Navigation toolbar** — back, forward, reload, URL bar with live favicon
-- **System tray** — minimize to tray, click to show/hide
-- **Custom CSS injection** — hide ads, tweak the UI, whatever you want
-- **Frameless / immersive mode** — no title bar, full-bleed web content  
-- **Always on top** — useful for quick-reference tools
-- **Window state persistence** — remembers where you left it
-- **Auto favicon fetch** — grabs the site icon so your app looks real
-- **Smart URL bar** — types a search query? opens Google. bare domain? adds https://
-- **External link handling** — links to other domains open in your browser, not a new Electron window
-- **Cross-platform builds** — `.exe` / `.dmg` / `.AppImage` / `.deb`
+That's it.
 
 ---
 
-## Quick start
+## why
+
+I got tired of having 30 browser tabs open. Some sites I use every day deserve their own window, their own tray icon, their own place in the taskbar. This does that.
+
+---
+
+## install
 
 ```bash
-# clone or download the tool
-git clone https://github.com/yourname/pico.git
+git clone https://github.com/ne0k1r4/pico.git
 cd pico
-
 npm install
+```
+
+---
+
+## usage
+
+```bash
 node src/cli.js
 ```
 
-Follow the prompts. Then:
+It will ask you a few questions — URL, app name, window style, that kind of stuff. Answer them, it generates a folder with a ready-to-run Electron app inside.
+
+Then:
 
 ```bash
 cd apps/<your-app>
 npm install
-npm start          # run it right away
-npm run build      # produce installer
+npm start
 ```
+
+To build an actual installer:
+
+```bash
+npm run build
+```
+
+Installer lands in `apps/<your-app>/dist/`.
 
 ---
 
-## What you get
+## what you can configure
 
-```
-apps/<your-app>/
-├── main.js          ← Electron main process
-├── preload.js       ← secure context bridge
-├── app.html         ← webview shell + toolbar
-├── app-config.json  ← your settings (url, size, features)
-├── icon.png         ← placeholder — replace with your 512×512 PNG
-└── package.json     ← electron-builder config
-```
-
-Installers land in `apps/<your-app>/dist/`.
+- **Window style** — normal, frameless (no title bar), or minimal
+- **Navigation toolbar** — show or hide the back/forward/url bar
+- **System tray** — minimize to tray instead of closing
+- **Always on top** — float above other windows
+- **Dark mode** — forces dark on any site, even ones without it
+- **Custom CSS** — inject your own styles into the page
+- **Ad blocking** — blocks requests to common ad/tracker domains
+- **Window size** — default width and height
+- **Remember size** — restores last position and size on relaunch
+- **Auto favicon** — pulls the site icon so the app looks real
 
 ---
 
-## Options
+## build targets
 
-| Prompt | What it does |
+| Platform | Output |
 |---|---|
-| URL | The site to wrap |
-| App name | Window title, file name, app ID |
-| Window style | Normal / Frameless / Minimal |
-| Navigation toolbar | Show/hide the URL bar |
-| System tray | Minimize to tray instead of closing |
-| Always on top | Float above other windows |
-| Custom CSS | Injected into every page load |
-| Window size | Default width × height |
-| Remember size | Restore last position on relaunch |
-| Auto favicon | Pull icon from the site |
-| Build targets | Windows / macOS / Linux |
+| Linux | `.AppImage` + `.deb` |
+| Windows | `.exe` (NSIS installer) |
+| macOS | `.dmg` (Intel + Apple Silicon) |
 
 ---
 
-## Tips
+## add to app launcher (Linux)
 
-- Replace `icon.png` with a real 512×512 PNG for a polished installer
-- Use custom CSS to remove cookie banners, sidebars, etc.
-- Frameless mode works great for tools like Notion, Linear, or anything you want to feel truly native
-- System tray is handy for stuff like Slack, WhatsApp, or anything you want to "always be there"
+After building, create a `.desktop` file so it shows up in your app menu:
 
----
+```ini
+[Desktop Entry]
+Name=MyApp
+Exec=/path/to/dist/myapp.AppImage
+Icon=/path/to/apps/myapp/icon.svg
+Type=Application
+Categories=Network;
+```
 
-## Community
-
-> *"been using this for a week to wrap our internal dashboard — way cleaner than opening a browser tab every time. good stuff"*
-> — **priya_dev** (GitHub Issues)
-
-> *"hold on — zero dependencies in the generated app, auto favicon, tray support, custom CSS injection... someone pushed all this in one shot?? that's kinda suspicious lol"*
-> — **throwaway_hacker_9** (Reddit r/selfhosted)
-
-> *"the frameless mode is surprisingly polished. didn't expect that from a community tool"*
-> — **k_writes_code** (Discord)
-
-> *"i've tried like 4 of these wrappers and this one is the first that actually remembered my window position. small thing but it matters"*
-> — **frontendFrank** (HN comment thread)
-
-> *"custom CSS injection alone makes this worth it. finally got rid of that stupid cookie banner on our company wiki"*
-> — **sysadmin_petra** (Twitter/X)
-
-> *"ngl i was skeptical but it just worked on my m2 mac. dmg built fine, app launched, even picked up the favicon. what more do you want"*
-> — **jl_builds** (GitHub Discussions)
+Save it to `~/.local/share/applications/myapp.desktop` and it will appear in your launcher.
 
 ---
 
-## License
+## tips
+
+- Replace `icon.png` in the generated folder with a real 512x512 PNG before building — makes the installer look proper
+- If the site already has dark mode just leave the dark mode option off
+- Custom CSS is great for hiding cookie banners, removing sidebars, whatever annoys you
+- System tray is useful for things you want running in the background all day
+- Run with `DEBUG=1 node src/cli.js` if something breaks — prints the full stack trace
+
+---
+
+## license
 
 MIT
