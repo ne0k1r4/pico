@@ -58,7 +58,7 @@ function createWindow() {
     title: config.name,
     frame: !isFrameless,
     titleBarStyle: isFrameless ? 'hidden' : 'default',
-    alwaysOnTop: config.alwaysOnTop || false,
+    alwaysOnTop: !!config.alwaysOnTop,
     icon: path.join(__dirname, 'icon.png'),
     backgroundColor: '#ffffff',
     show: false,
