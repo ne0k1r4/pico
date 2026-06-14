@@ -161,3 +161,4 @@ main().catch(err => {
   process.exit(1)
 })
 // added windowStyle list prompt — normal / frameless / minimal
+// removed a console.log I forgot to take out
