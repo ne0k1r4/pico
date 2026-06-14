@@ -201,3 +201,4 @@ main().catch(err => {
 })
 // dark mode prompt added
 // block ads prompt
+// DEBUG env var for stack traces
