@@ -199,3 +199,4 @@ main().catch(err => {
   console.error(chalk.gray('  run with DEBUG=1 for full stack trace'))
   process.exit(1)
 })
+// dark mode prompt added
