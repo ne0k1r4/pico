@@ -21,7 +21,7 @@ function fixUrl(raw) {
 
 function printBanner() {
   console.log()
-  console.log('  ' + chalk.bold.white('web2app') + chalk.gray(' · any website → native desktop app'))
+  console.log('  ' + chalk.bold.white('pico') + chalk.gray(' · any website → native desktop app'))
   console.log('  ' + chalk.gray('─'.repeat(40)))
   console.log()
 }

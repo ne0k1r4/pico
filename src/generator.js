@@ -113,7 +113,7 @@ function buildPackageJson(slug, config) {
       'electron-builder': '^24.9.1'
     },
     build: {
-      appId: `io.web2app.${slug}`,
+      appId: `io.pico.${slug}`,
       productName: config.name,
       directories: { output: 'dist' },
       // don't bundle node_modules into the app — electron doesn't need them

@@ -1,4 +1,4 @@
-# web2app 🌐
+# pico 🌐
 
 > Turn any website into a native desktop app — Windows, macOS & Linux.
 
@@ -26,8 +26,8 @@ A lightweight CLI tool that wraps any URL into a standalone Electron desktop app
 
 ```bash
 # clone or download the tool
-git clone https://github.com/yourname/web2app.git
-cd web2app
+git clone https://github.com/yourname/pico.git
+cd pico
 
 npm install
 node src/cli.js

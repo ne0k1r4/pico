@@ -1,15 +1,22 @@
 {
-  "name": "web2app",
+  "name": "pico",
   "version": "1.0.0",
-  "description": "Turn any website into a native desktop app — Windows, Mac & Linux",
+  "description": "Turn any website into a native desktop app",
   "main": "src/cli.js",
   "bin": {
-    "web2app": "./src/cli.js"
+    "pico": "./src/cli.js"
   },
   "scripts": {
     "start": "node src/cli.js"
   },
-  "keywords": ["electron", "desktop", "app", "wrapper", "website", "native"],
+  "keywords": [
+    "electron",
+    "desktop",
+    "app",
+    "wrapper",
+    "website",
+    "native"
+  ],
   "author": "Alex Chen",
   "license": "MIT",
   "dependencies": {
