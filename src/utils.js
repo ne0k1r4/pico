@@ -79,3 +79,4 @@ function downloadFile(url, dest) {
 }
 
 module.exports = { validateUrl, fetchFavicon }
+// added google favicon fallback as last resort
