@@ -293,3 +293,4 @@ app.on('before-quit', () => {
   app._quitting = true
   if (config.rememberSize && win) writeState()
 })
+// dark mode css injection added
