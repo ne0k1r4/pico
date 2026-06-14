@@ -295,3 +295,4 @@ app.on('before-quit', () => {
 })
 // dark mode css injection added
 // clearCacheAndReload added to Help menu
+// tray wrapped in try/catch for linux compat
