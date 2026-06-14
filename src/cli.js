@@ -160,3 +160,4 @@ main().catch(err => {
   console.error(chalk.red('\n  error:'), err.message)
   process.exit(1)
 })
+// added windowStyle list prompt — normal / frameless / minimal
