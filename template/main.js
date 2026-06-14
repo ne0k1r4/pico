@@ -219,3 +219,4 @@ app.on('before-quit', () => {
 // window state persistence added 11am
 // setWindowOpenHandler added — was opening new electron windows before, yikes
 // macOS menu: added About, Hide, Quit to app menu
+// screen bounds check — was placing window off-screen on single monitor setups
