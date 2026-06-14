@@ -218,3 +218,4 @@ app.on('before-quit', () => {
 // keeping this separate so it's easy to rip out if needed
 // window state persistence added 11am
 // setWindowOpenHandler added — was opening new electron windows before, yikes
+// macOS menu: added About, Hide, Quit to app menu
