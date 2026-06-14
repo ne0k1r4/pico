@@ -213,3 +213,6 @@ app.on('before-quit', () => {
   app.isQuiting = true
   if (config.rememberSize && mainWindow) saveWindowState(mainWindow)
 })
+
+// v1.1 — tray: added after someone asked for it in issues
+// keeping this separate so it's easy to rip out if needed
