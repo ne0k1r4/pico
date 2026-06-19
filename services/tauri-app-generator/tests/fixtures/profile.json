@@ -1,0 +1,35 @@
+{
+  "websiteUrl": "https://example.com",
+  "app": {
+    "name": "Example",
+    "title": "Example",
+    "bundleIdentifier": "com.web2native.example",
+    "version": "1.2.3",
+    "themeColor": "#155EEF",
+    "description": "Example desktop app"
+  },
+  "features": {
+    "notifications": true,
+    "fileUploads": true,
+    "downloads": true,
+    "camera": false,
+    "microphone": false,
+    "clipboard": true,
+    "tray": true,
+    "startupLaunch": false,
+    "deepLinks": {
+      "schemes": ["example"]
+    }
+  },
+  "buildTargets": [
+    { "platform": "windows", "architectures": ["x86_64"] },
+    { "platform": "macos", "architectures": ["x86_64", "aarch64"] },
+    { "platform": "linux", "architectures": ["x86_64"] }
+  ],
+  "autoUpdate": {
+    "enabled": true,
+    "endpoint": "https://updates.web2native.test/example/{{target}}/{{arch}}/{{current_version}}",
+    "publicKey": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "channel": "stable"
+  }
+}

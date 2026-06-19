@@ -1,0 +1,81 @@
+name: build-workers
+
+on:
+  push:
+    paths:
+      - "services/build-workers/**"
+      - ".github/workflows/build-workers.yml"
+  pull_request:
+    paths:
+      - "services/build-workers/**"
+      - ".github/workflows/build-workers.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: services/build-workers
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.1.17"
+      - run: bun install
+      - run: bun run typecheck
+      - run: bun test
+
+  docker-linux:
+    runs-on: ubuntu-24.04
+    needs: test
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: services/build-workers
+          file: services/build-workers/Dockerfile.linux
+          push: ${{ github.event_name == 'push' }}
+          tags: ghcr.io/web2native/build-worker-linux:${{ github.sha }}
+
+  macos-worker-validation:
+    runs-on: macos-14
+    needs: test
+    defaults:
+      run:
+        working-directory: services/build-workers
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.1.17"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin,aarch64-apple-darwin
+      - run: bun install
+      - run: bun run typecheck
+
+  windows-worker-validation:
+    runs-on: windows-2022
+    needs: test
+    defaults:
+      run:
+        working-directory: services/build-workers
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.1.17"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - run: bun install
+      - run: bun run typecheck

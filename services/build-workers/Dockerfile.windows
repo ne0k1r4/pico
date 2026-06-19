@@ -1,0 +1,19 @@
+# escape=`
+FROM mcr.microsoft.com/windows/servercore:ltsc2022
+
+SHELL ["powershell", "-NoProfile", "-Command"]
+WORKDIR C:\worker
+
+RUN iwr https://bun.sh/install.ps1 -UseBasicParsing | iex
+RUN iwr https://win.rustup.rs/x86_64 -OutFile rustup-init.exe; `
+    .\rustup-init.exe -y --profile minimal --default-toolchain stable; `
+    Remove-Item rustup-init.exe
+
+ENV PATH="C:\Users\ContainerAdministrator\.bun\bin;C:\Users\ContainerAdministrator\.cargo\bin;${PATH}"
+ENV WORKER_PLATFORM=windows
+
+COPY package.json tsconfig.json ./
+RUN bun install --production
+COPY src ./src
+
+CMD ["bun", "src/main.ts"]

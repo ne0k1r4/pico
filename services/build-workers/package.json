@@ -1,0 +1,27 @@
+{
+  "name": "@web2native/build-workers",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun src/main.ts",
+    "start:linux": "WORKER_PLATFORM=linux bun src/main.ts",
+    "start:windows": "WORKER_PLATFORM=windows bun src/main.ts",
+    "start:macos": "WORKER_PLATFORM=macos bun src/main.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.600.0",
+    "@aws-sdk/lib-storage": "^3.600.0",
+    "bullmq": "^5.8.4",
+    "ioredis": "^5.4.1",
+    "tar": "^7.4.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.6",
+    "@types/tar": "^6.1.13",
+    "typescript": "^5.5.3"
+  }
+}

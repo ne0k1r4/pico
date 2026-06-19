@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web2native-build-worker-linux
+  labels:
+    app.kubernetes.io/name: web2native-build-worker
+    app.kubernetes.io/component: linux-worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: web2native-build-worker
+      app.kubernetes.io/component: linux-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: web2native-build-worker
+        app.kubernetes.io/component: linux-worker
+    spec:
+      serviceAccountName: web2native-build-worker
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: worker
+          image: ghcr.io/web2native/build-worker-linux:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: WORKER_PLATFORM
+              value: linux
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: web2native-build-worker
+                  key: redis-url
+            - name: ARTIFACT_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: web2native-build-worker
+                  key: artifact-bucket
+            - name: S3_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: web2native-build-worker
+                  key: s3-region
+            - name: S3_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: web2native-build-worker
+                  key: s3-endpoint
+                  optional: true
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+              ephemeral-storage: 20Gi
+            limits:
+              cpu: "4"
+              memory: 8Gi
+              ephemeral-storage: 40Gi
+          volumeMounts:
+            - name: workspace
+              mountPath: /tmp/web2native-builds
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: workspace
+          emptyDir:
+            sizeLimit: 40Gi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: web2native-build-worker

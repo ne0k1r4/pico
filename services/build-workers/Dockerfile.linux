@@ -1,0 +1,32 @@
+FROM rust:1.78-bookworm AS base
+
+ENV BUN_INSTALL=/usr/local/bun
+ENV PATH=/usr/local/bun/bin:/usr/local/cargo/bin:$PATH
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    file \
+    libayatana-appindicator3-dev \
+    librsvg2-dev \
+    libssl-dev \
+    patchelf \
+    pkg-config \
+    webkit2gtk-4.1 \
+    xdg-utils \
+  && curl -fsSL https://bun.sh/install | bash -s "bun-v1.1.17" \
+  && rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu \
+  && useradd --create-home --uid 10001 worker \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /worker
+COPY package.json tsconfig.json ./
+RUN bun install --production
+COPY src ./src
+RUN chown -R worker:worker /worker /usr/local/cargo /tmp
+
+ENV WORKER_PLATFORM=linux
+USER worker
+CMD ["bun", "src/main.ts"]

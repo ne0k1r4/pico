@@ -1,0 +1,4 @@
+FROM scratch
+
+LABEL org.opencontainers.image.title="WEB2NATIVE macOS build worker"
+LABEL org.opencontainers.image.description="macOS Tauri builds must run on Apple macOS hosts. Use the GitHub Actions macOS workflow or a self-hosted macOS runner with services/build-workers."
