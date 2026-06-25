@@ -1,105 +1,134 @@
-# pico
+# 🌟 pico-chan 🌟
 
-Wraps any website into a desktop app. Works on Windows, Mac, and Linux.
-
-That's it.
-
----
-
-## why
-
-I got tired of having 30 browser tabs open. Some sites I use every day deserve their own window, their own tray icon, their own place in the taskbar. This does that.
+<p align="center">
+  <img src="assets/mascot.png" alt="pico-chan Mascot" width="280">
+  <br>
+  <i>"Let's wrap up your favorite websites into beautiful, native desktop apps! (๑˃ᴗ˂)ﻭ"</i>
+</p>
 
 ---
 
-## install
+## 🌸 why pico-chan?
+
+Are you tired of having 50 browser tabs open, hogging your memory? Pico-chan wraps any website into a standalone native desktop application. Give your daily web apps (GitHub, Notion, Discord, etc.) their own window, their own tray icon, and their own dedicated taskbar slot. 
+
+Works beautifully on **Windows, macOS, and Linux**!
+
+---
+
+## 🚀 installation
+
+Get pico-chan set up on your machine in just a few steps:
 
 ```bash
+# Clone the repository
 git clone https://github.com/ne0k1r4/pico.git
 cd pico
+
+# Install development dependencies
 npm install
 ```
 
 ---
 
-## usage
+## 🎨 visual gui mode (recommended)
+
+For a fully interactive, dark-neon desktop dashboard, launch the graphical workspace:
 
 ```bash
-node src/cli.js
+npm run gui
 ```
 
-It will ask you a few questions — URL, app name, window style, that kind of stuff. Answer them, it generates a folder with a ready-to-run Electron app inside.
+The GUI offers a tabbed configurations form, automatic website metadata detection, favicon scraping, and a **real-time CLI command builder**.
 
-Then:
+<p align="center">
+  <i>(〃＾▽＾〃) Configure, compile, and run your new app directly from the dashboard!</i>
+</p>
+
+---
+
+## 💻 terminal cli mode
+
+If you prefer the command line, pico-chan has a interactive CLI built right in. 
 
 ```bash
-cd apps/<your-app>
+# Run the local wrapper script
+./pico
+```
+
+It will ask you a series of questions—URL, app name, style, always-on-top, etc. Once completed, it compiles your app immediately.
+
+### 🌟 global command shortcut
+Want to run pico-chan globally from *any* terminal folder simply as `pico`? Register it globally via NPM:
+
+```bash
+# Link the package globally
+npm link
+
+# Now you can run it from anywhere!
+pico
+```
+
+---
+
+## 📦 compiling the generated client
+
+Once generated, run the output wrapper with these simple steps:
+
+```bash
+# Navigate to the generated directory
+cd apps/<your-app-slug>
+
+# Install the Electron dependencies
 npm install
+
+# Run the app locally to test it!
 npm start
 ```
 
-To build an actual installer:
+### 🔨 compiling distribution installers
+
+To package the wrapper into a ready-to-distribute native installer (e.g. `.dmg`, `.exe`, or `.AppImage`):
 
 ```bash
 npm run build
 ```
 
-Installer lands in `apps/<your-app>/dist/`.
+The compiled package will land in `apps/<your-app-slug>/dist/`.
 
 ---
 
-## what you can configure
+## 🛠️ features you can configure
 
-- **Window style** — normal, frameless (no title bar), or minimal
-- **Navigation toolbar** — show or hide the back/forward/url bar
-- **System tray** — minimize to tray instead of closing
-- **Always on top** — float above other windows
-- **Dark mode** — forces dark on any site, even ones without it
-- **Custom CSS** — inject your own styles into the page
-- **Ad blocking** — blocks requests to common ad/tracker domains
-- **Window size** — default width and height
-- **Remember size** — restores last position and size on relaunch
-- **Auto favicon** — pulls the site icon so the app looks real
+- 🖼️ **Window Styles** — Standard normal borders, Frameless (clean header, traffic lights on macOS), or Minimal navigation strip.
+- ⚓ **Navigation Controls** — Back, Forward, Home keys and custom address bar.
+- 📥 **System Tray Minimize** — Closes to the system tray so the app runs in the background.
+- 🔝 **Always on Top** — Float client above other application bounds.
+- 🌙 **Force Dark Mode** — Inverts color layouts on target site dynamically using active CSS filters.
+- 🎨 **Custom CSS Injection** — Paste customized style overrides.
+- 🛡️ **Ad Blocking** — Automatically intercepts and cancels requests to common ad/tracker domains.
+- ⚙️ **Bound Memory** — Restores the window size and position from the last session.
 
 ---
 
-## build targets
+## 📦 build distribution targets
 
-| Platform | Output |
+| Platform | Output Artifacts |
 |---|---|
-| Linux | `.AppImage` + `.deb` |
-| Windows | `.exe` (NSIS installer) |
-| macOS | `.dmg` (Intel + Apple Silicon) |
+| 🐧 **Linux** | `.AppImage` + `.deb` installations |
+| 🪟 **Windows** | `.exe` (NSIS Installer) |
+| 🍏 **macOS** | `.dmg` (Universal Intel + Apple Silicon build) |
 
 ---
 
-## add to app launcher (Linux)
+## 🎀 developer tips
 
-After building, create a `.desktop` file so it shows up in your app menu:
-
-```ini
-[Desktop Entry]
-Name=MyApp
-Exec=/path/to/dist/myapp.AppImage
-Icon=/path/to/apps/myapp/icon.svg
-Type=Application
-Categories=Network;
-```
-
-Save it to `~/.local/share/applications/myapp.desktop` and it will appear in your launcher.
+- **Custom Icons:** Replace the generated `icon.png` in your client directory with a custom 512x512 PNG file before compiling distribution builds to ensure proper icon rendering.
+- **Custom CSS:** Use Custom CSS to hide unnecessary elements (such as cookie banners, footers, or sidebars) to give your wrapped app a truly native client look.
+- **Debug logs:** If an application crashes, run the CLI command with `DEBUG=1` (`DEBUG=1 ./pico`) to view full execution stack traces.
 
 ---
 
-## tips
-
-- Replace `icon.png` in the generated folder with a real 512x512 PNG before building — makes the installer look proper
-- If the site already has dark mode just leave the dark mode option off
-- Custom CSS is great for hiding cookie banners, removing sidebars, whatever annoys you
-- System tray is useful for things you want running in the background all day
-- Run with `DEBUG=1 node src/cli.js` if something breaks — prints the full stack trace
-
----
-
-## license
+## 📄 license
 
 MIT
