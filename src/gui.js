@@ -93,13 +93,28 @@ ipcMain.handle('run-app', (event, dir) => {
   function launchApp() {
     sendLog('Launching app...')
 
-    // resolve the electron binary bundled inside the generated app's node_modules
-    const electronBin = path.join(dir, 'node_modules', '.bin', 'electron')
-    const useElectron = fs.existsSync(electronBin)
+    // require('electron') inside the generated app dir returns the path to the real native binary
+    // we can't use require() directly from here (wrong cwd), so resolve the path manually
+    let electronExe = null
+    try {
+      const electronPkg = path.join(dir, 'node_modules', 'electron')
+      electronExe = require(path.join(electronPkg, 'index.js'))
+    } catch (e) {
+      // fallback: try the dist binary directly
+      const fallback = path.join(dir, 'node_modules', 'electron', 'dist', 'electron')
+      if (fs.existsSync(fallback)) electronExe = fallback
+    }
 
-    const child = useElectron
-      ? spawn(electronBin, ['.'], { cwd: dir, detached: true, stdio: 'ignore' })
-      : spawn('npx', ['electron', '.'], { cwd: dir, detached: true, stdio: 'ignore', shell: true })
+    if (!electronExe) {
+      sendLog('Could not find electron binary. Run: cd ' + dir + ' && npm start')
+      return
+    }
+
+    const child = spawn(electronExe, ['.'], {
+      cwd: dir,
+      detached: true,
+      stdio: 'ignore'
+    })
 
     child.unref() // let it run independently of pico GUI
 
