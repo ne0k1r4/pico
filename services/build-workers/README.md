@@ -1,10 +1,10 @@
-# WEB2NATIVE Build Workers
+# PICO Build Workers
 
 Queue-based Tauri build workers for Windows, macOS, and Linux.
 
 ## Queue Contract
 
-Queue name defaults to `web2native-builds`.
+Queue name defaults to `pico-builds`.
 
 ```json
 {
@@ -14,7 +14,7 @@ Queue name defaults to `web2native-builds`.
   "platform": "linux",
   "architecture": "x86_64",
   "source": {
-    "bucket": "web2native-sources",
+    "bucket": "pico-sources",
     "key": "projects/example/source.tar.gz",
     "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   },
@@ -38,7 +38,7 @@ Recommended BullMQ producer options:
 ```bash
 WORKER_PLATFORM=linux \
 REDIS_URL=redis://redis:6379 \
-ARTIFACT_BUCKET=web2native-artifacts \
+ARTIFACT_BUCKET=pico-artifacts \
 bun src/main.ts
 ```
 

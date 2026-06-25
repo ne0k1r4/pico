@@ -10,7 +10,7 @@ describe("BuildJobPayloadSchema", () => {
       platform: "macos",
       architecture: "aarch64",
       source: {
-        bucket: "web2native-sources",
+        bucket: "pico-sources",
         key: "projects/example/source.tar.gz",
         sha256: "a".repeat(64)
       },
@@ -27,7 +27,7 @@ describe("BuildJobPayloadSchema", () => {
       platform: "freebsd",
       architecture: "x86_64",
       source: {
-        bucket: "web2native-sources",
+        bucket: "pico-sources",
         key: "source.tar.gz",
         sha256: "a".repeat(64)
       },

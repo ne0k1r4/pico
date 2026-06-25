@@ -10,7 +10,7 @@ export async function createWorkspace(root: string, buildId: string, platform: B
 }
 
 export async function removeWorkspace(workspace: string): Promise<void> {
-  if (workspace.startsWith(os.tmpdir()) || workspace.includes("web2native-builds")) {
+  if (workspace.startsWith(os.tmpdir()) || workspace.includes("pico-builds")) {
     await rm(workspace, { recursive: true, force: true });
   }
 }
