@@ -2,7 +2,7 @@
 
 ## POST `/v1/analyze`
 
-Analyzes a public website URL and returns a structured WEB2NATIVE website profile.
+Analyzes a public website URL and returns a structured PICO website profile.
 
 ### Request
 

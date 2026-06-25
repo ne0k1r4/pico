@@ -9,7 +9,7 @@ const EnvSchema = z.object({
   ANALYZER_CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(86_400),
   ANALYZER_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
   ANALYZER_MAX_BYTES: z.coerce.number().int().positive().default(2_000_000),
-  ANALYZER_USER_AGENT: z.string().default("WEB2NATIVE-Analyzer/0.1")
+  ANALYZER_USER_AGENT: z.string().default("PICO-Analyzer/0.1")
 });
 
 export type AppConfig = z.infer<typeof EnvSchema>;
