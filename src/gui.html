@@ -41,7 +41,7 @@
       </nav>
 
       <div class="sidebar-footer">
-        <p class="status-msg">System: Idle (〃^-^〃)</p>
+        <p class="status-msg">System: Idle</p>
       </div>
     </aside>
 
@@ -255,7 +255,7 @@
             <div class="check-badge">✓</div>
           </div>
           <h2>App Generated Successfully!</h2>
-          <p class="sub-heading">Your native client is ready for execution (〃＾▽＾〃)</p>
+          <p class="sub-heading">Your native client is ready for execution.</p>
 
           <div class="details-box select-text">
             <span class="label">Distribution Path</span>
@@ -289,12 +289,12 @@
         
         // System mood message
         const moods = {
-          general: 'System: Configuring app sources... (・`ω´・)',
-          window: 'System: Customizing client layout... (〃ー〃)',
-          injections: 'System: Tweaking stylesheets & filters... (｡♥‿♥｡)',
-          build: 'System: Setting compilation targets... (｀ー´)ψ'
+          general: 'System: Configuring app sources...',
+          window: 'System: Customizing client layout...',
+          injections: 'System: Tweaking stylesheets & filters...',
+          build: 'System: Setting compilation targets...'
         };
-        statusMsg.textContent = moods[targetTab] || 'System: Idle (〃^-^〃)';
+        statusMsg.textContent = moods[targetTab] || 'System: Idle';
       });
     });
 
@@ -399,16 +399,16 @@
     function logToTerminal(text) {
       const line = document.createElement('div');
       line.className = 'terminal-line';
-      
-      // Add cute Kaomoji status prefix depending on content
-      let prefix = '• ';
-      if (text.includes('Initializing')) prefix = '(๑˃ᴗ˂)ﻭ ';
-      else if (text.includes('directory')) prefix = '(〃ー〃) ';
-      else if (text.includes('complete')) prefix = '＼(＾▽＾)／ ';
-      else if (text.includes('Dependencies')) prefix = '(・_・) ';
-      else if (text.includes('Starting')) prefix = '🚀 ';
-      else if (text.includes('Error')) prefix = '(╯°□°）╯ ';
-      
+
+      // prefix based on content type
+      let prefix = '  ';
+      if (text.includes('Initializing') || text.includes('Preparing')) prefix = '→ ';
+      else if (text.includes('directory') || text.includes('Directory')) prefix = '  ';
+      else if (text.includes('complete') || text.includes('complete') || text.includes('launched')) prefix = '✓ ';
+      else if (text.includes('Installing') || text.includes('installed')) prefix = '↓ ';
+      else if (text.includes('Launching') || text.includes('Starting')) prefix = '▶ ';
+      else if (text.includes('Error') || text.includes('failed') || text.includes('Failed')) prefix = '✗ ';
+
       line.textContent = prefix + text;
       logsConsole.appendChild(line);
       logsConsole.scrollTop = logsConsole.scrollHeight;
@@ -445,7 +445,7 @@
       };
 
       logsConsole.innerHTML = '';
-      statusMsg.textContent = 'System: Working... (｀ー´)ψ';
+      statusMsg.textContent = 'System: Working...';
       switchActiveView('progress-view');
 
       if (logUnsubscribe) logUnsubscribe();
@@ -456,13 +456,13 @@
       if (result.success) {
         buildPath = result.dir;
         document.getElementById('dist-path').textContent = result.dir;
-        statusMsg.textContent = 'System: Complete! ＼(＾▽＾)／';
+        statusMsg.textContent = 'System: Complete';
         setTimeout(() => {
           switchActiveView('success-view');
         }, 1200);
       } else {
         alert(`Compilation failed: ${result.error}`);
-        statusMsg.textContent = 'System: Idle (〃^-^〃)';
+        statusMsg.textContent = 'System: Idle';
         switchActiveView('form-view');
       }
     });
@@ -479,7 +479,7 @@
     document.getElementById('restart-btn').addEventListener('click', () => {
       form.reset();
       urlStatus.className = 'status-dot';
-      statusMsg.textContent = 'System: Idle (〃^-^〃)';
+      statusMsg.textContent = 'System: Idle';
       switchActiveView('form-view');
       updateCLIPreview();
     });

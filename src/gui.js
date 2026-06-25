@@ -3,7 +3,7 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron')
 const path = require('path')
 const fs = require('fs-extra')
-const { exec } = require('child_process')
+const { exec, spawn } = require('child_process')
 const { generateApp } = require('./generator')
 const { validateUrl, fetchFavicon } = require('./utils')
 
@@ -62,15 +62,15 @@ ipcMain.handle('generate-app', async (event, config) => {
   }
 
   try {
-    sendLog('🔍 Initializing app generation workspace...')
+    sendLog('Initializing app generation workspace...')
     const result = await generateApp(config)
-    sendLog(`📂 Project directory prepared: ${result.dir}`)
-    sendLog('🎨 Assets and configuration files written.')
-    sendLog('📦 Generated files manifest and package settings.')
-    sendLog('✅ Generation complete!')
+    sendLog(`Project directory prepared: ${result.dir}`)
+    sendLog('Assets and configuration files written.')
+    sendLog('Generated files manifest and package settings.')
+    sendLog('Generation complete!')
     return { success: true, dir: result.dir }
   } catch (err) {
-    sendLog(`❌ Error: ${err.message}`)
+    sendLog(`Error: ${err.message}`)
     return { success: false, error: err.message }
   }
 })
@@ -86,29 +86,46 @@ ipcMain.handle('run-app', (event, dir) => {
     }
   }
 
-  sendLog('🚀 Preparing app runtime environment...')
-  
-  // Check if node_modules exists
+  sendLog('Preparing app runtime environment...')
+
   const hasNodeModules = fs.existsSync(path.join(dir, 'node_modules'))
-  
+
+  function launchApp() {
+    sendLog('Launching app...')
+
+    // resolve the electron binary bundled inside the generated app's node_modules
+    const electronBin = path.join(dir, 'node_modules', '.bin', 'electron')
+    const useElectron = fs.existsSync(electronBin)
+
+    const child = useElectron
+      ? spawn(electronBin, ['.'], { cwd: dir, detached: true, stdio: 'ignore' })
+      : spawn('npx', ['electron', '.'], { cwd: dir, detached: true, stdio: 'ignore', shell: true })
+
+    child.unref() // let it run independently of pico GUI
+
+    child.on('error', (err) => {
+      sendLog(`Launch error: ${err.message}`)
+    })
+
+    sendLog('App launched. Window should appear shortly.')
+  }
+
   if (!hasNodeModules) {
-    sendLog('📥 Installing package dependencies (npm install)...')
-    const child = exec('npm install', { cwd: dir })
-    
-    child.stdout.on('data', (data) => sendLog(data.toString().trim()))
-    child.stderr.on('data', (data) => sendLog(data.toString().trim()))
-    
-    child.on('close', (code) => {
+    sendLog('Installing dependencies (npm install)...')
+    const install = spawn('npm', ['install'], { cwd: dir, shell: true })
+
+    install.stdout.on('data', (d) => sendLog(d.toString().trim()))
+    install.stderr.on('data', (d) => sendLog(d.toString().trim()))
+
+    install.on('close', (code) => {
       if (code === 0) {
-        sendLog('📦 Dependencies installed successfully!')
-        sendLog('🏃 Starting application...')
-        exec('npm start', { cwd: dir })
+        sendLog('Dependencies installed.')
+        launchApp()
       } else {
-        sendLog(`❌ Dependency installation failed (exit code ${code}).`)
+        sendLog(`npm install failed (exit ${code}). Try running it manually in the app folder.`)
       }
     })
   } else {
-    sendLog('🏃 Starting application...')
-    exec('npm start', { cwd: dir })
+    launchApp()
   }
 })
