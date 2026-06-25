@@ -3,7 +3,7 @@
   "app": {
     "name": "Example",
     "title": "Example",
-    "bundleIdentifier": "com.web2native.example",
+    "bundleIdentifier": "com.pico.example",
     "version": "1.2.3",
     "themeColor": "#155EEF",
     "description": "Example desktop app"
@@ -28,7 +28,7 @@
   ],
   "autoUpdate": {
     "enabled": true,
-    "endpoint": "https://updates.web2native.test/example/{{target}}/{{arch}}/{{current_version}}",
+    "endpoint": "https://updates.pico.test/example/{{target}}/{{arch}}/{{current_version}}",
     "publicKey": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
     "channel": "stable"
   }

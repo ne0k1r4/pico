@@ -5,7 +5,7 @@ use tauri_app_generator::{generate_from_json_file, GenerationOptions};
 
 #[derive(Debug, Parser)]
 #[command(name = "tauri-app-generator")]
-#[command(about = "Generate production Tauri projects from WEB2NATIVE website profiles")]
+#[command(about = "Generate production Tauri projects from PICO website profiles")]
 struct Cli {
     #[arg(long, value_name = "FILE")]
     profile: PathBuf,

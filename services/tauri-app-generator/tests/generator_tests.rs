@@ -41,13 +41,13 @@ fn generates_complete_tauri_project() {
     .unwrap();
 
     assert_eq!(config["productName"], "Example");
-    assert_eq!(config["identifier"], "com.web2native.example");
+    assert_eq!(config["identifier"], "com.pico.example");
     assert_eq!(config["bundle"]["targets"][0], "app");
     assert!(config["bundle"]["targets"]
         .as_array()
         .unwrap()
         .contains(&Value::String("msi".into())));
-    assert!(config.get("web2native").is_none());
+    assert!(config.get("pico").is_none());
 }
 
 #[test]
@@ -57,7 +57,7 @@ fn rejects_insecure_public_urls() {
       "app": {
         "name": "Bad",
         "title": "Bad",
-        "bundleIdentifier": "com.web2native.bad",
+        "bundleIdentifier": "com.pico.bad",
         "version": "1.0.0"
       }
     }"#;
