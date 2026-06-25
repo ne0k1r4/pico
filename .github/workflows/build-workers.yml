@@ -44,7 +44,7 @@ jobs:
           context: services/build-workers
           file: services/build-workers/Dockerfile.linux
           push: ${{ github.event_name == 'push' }}
-          tags: ghcr.io/web2native/build-worker-linux:${{ github.sha }}
+          tags: ghcr.io/pico/build-worker-linux:${{ github.sha }}
 
   macos-worker-validation:
     runs-on: macos-14
