@@ -3,7 +3,7 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron')
 const path = require('path')
 const fs = require('fs-extra')
-const { exec, spawn } = require('child_process')
+const { spawn } = require('child_process')
 const { generateApp } = require('./generator')
 const { validateUrl, fetchFavicon } = require('./utils')
 
@@ -39,7 +39,6 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
 
-// IPC Handlers
 ipcMain.handle('validate-url', async (event, url) => {
   return await validateUrl(url).catch(() => false)
 })
@@ -93,14 +92,11 @@ ipcMain.handle('run-app', (event, dir) => {
   function launchApp() {
     sendLog('Launching app...')
 
-    // require('electron') inside the generated app dir returns the path to the real native binary
-    // we can't use require() directly from here (wrong cwd), so resolve the path manually
     let electronExe = null
     try {
       const electronPkg = path.join(dir, 'node_modules', 'electron')
       electronExe = require(path.join(electronPkg, 'index.js'))
     } catch (e) {
-      // fallback: try the dist binary directly
       const fallback = path.join(dir, 'node_modules', 'electron', 'dist', 'electron')
       if (fs.existsSync(fallback)) electronExe = fallback
     }
@@ -116,7 +112,7 @@ ipcMain.handle('run-app', (event, dir) => {
       stdio: 'ignore'
     })
 
-    child.unref() // let it run independently of pico GUI
+    child.unref()
 
     child.on('error', (err) => {
       sendLog(`Launch error: ${err.message}`)

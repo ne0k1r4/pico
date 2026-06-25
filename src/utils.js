@@ -1,16 +1,9 @@
-// url validation + favicon fetching
-// nothing fancy here, just works for 95% of cases
-// TODO: parse html <link rel="icon"> tags for sites that don't have /favicon.ico
-// TODO: try manifest.json for PWA icons — those are usually higher res
-
 const fs   = require('fs-extra')
 const path = require('path')
 const https = require('https')
 const http  = require('http')
 const { URL } = require('url')
 
-// just checks if the site responds — doesn't care about status code
-// even a 404 means the server is alive, which is good enough
 async function validateUrl(rawUrl) {
   try {
     const u = new URL(rawUrl)
@@ -25,27 +18,23 @@ async function validateUrl(rawUrl) {
       req.end()
     })
   } catch {
-    // bad url format
     return false
   }
 }
 
-// tries a bunch of common favicon locations, returns the path if found
-// or null if nothing worked (caller should handle that gracefully)
 async function fetchFavicon(siteUrl, outputDir, appName) {
   let base
   try {
     base = new URL(siteUrl)
   } catch {
-    return null  // invalid url, just skip
+    return null
   }
 
   const candidates = [
-    `${base.origin}/apple-touch-icon.png`,     // best quality usually
+    `${base.origin}/apple-touch-icon.png`,
     `${base.origin}/apple-touch-icon-precomposed.png`,
     `${base.origin}/favicon.png`,
     `${base.origin}/favicon.ico`,
-    // google's favicon service as last resort — always returns something
     `https://www.google.com/s2/favicons?domain=${base.hostname}&sz=256`
   ]
 
@@ -58,21 +47,16 @@ async function fetchFavicon(siteUrl, outputDir, appName) {
   for (const url of candidates) {
     const ok = await tryDownload(url, savePath)
     if (ok) return savePath
-    // silent fail — just try next one
   }
 
   return null
 }
 
-// returns true if download succeeded, false otherwise
-// no throwing — let the caller decide what to do
 function tryDownload(url, dest) {
   return new Promise(resolve => {
     const lib = url.startsWith('https') ? https : http
 
     const req = lib.get(url, { timeout: 5000 }, res => {
-      // redirect? follow it once
-      // TODO: proper redirect following (only doing one hop right now)
       if (res.statusCode === 301 || res.statusCode === 302) {
         const loc = res.headers.location
         if (loc) return resolve(tryDownload(loc, dest).catch(() => false))
@@ -97,4 +81,3 @@ function tryDownload(url, dest) {
 }
 
 module.exports = { validateUrl, fetchFavicon }
-// fix: now follows one redirect in tryDownload

@@ -1,9 +1,5 @@
 #!/usr/bin/env node
 
-// TODO: add a --config flag so people can pass a json file instead of answering prompts
-// TODO: maybe add a --yes flag to just use defaults for everything
-// TODO: support pasting a list of urls and bulk generating apps?? could be useful
-
 const inquirer = require('inquirer')
 const chalk = require('chalk')
 const path = require('path')
@@ -11,7 +7,6 @@ const fs = require('fs-extra')
 const { generateApp } = require('./generator')
 const { validateUrl, fetchFavicon } = require('./utils')
 
-// people keep pasting bare domains, just fix it silently
 function fixUrl(raw) {
   let u = (raw || '').trim()
   if (!u) return u
@@ -34,10 +29,8 @@ async function askQuestions() {
       message: 'URL of the website:',
       filter: fixUrl,
       validate: async val => {
-        if (!val) return 'need a url bro'
+        if (!val) return 'Enter a URL.'
         const alive = await validateUrl(val).catch(() => false)
-        // not blocking on this — maybe they're offline, maybe its a local server
-        // just warn and let them continue
         if (!alive) {
           console.log(chalk.yellow('\n  ⚠ could not reach that url — continuing anyway'))
         }
@@ -48,7 +41,7 @@ async function askQuestions() {
       type: 'input',
       name: 'name',
       message: 'App name:',
-      validate: v => v.trim() ? true : 'give it a name lol'
+      validate: v => v.trim() ? true : 'Enter an app name.'
     },
     {
       type: 'input',
@@ -156,7 +149,6 @@ async function main() {
   try {
     answers = await askQuestions()
   } catch (err) {
-    // ctrl+c during prompts
     if (err.isTtyError || err.message?.includes('force closed')) {
       console.log(chalk.gray('\n  cancelled'))
       process.exit(0)
@@ -167,7 +159,6 @@ async function main() {
   console.log()
   console.log(chalk.cyan('  building...'))
 
-  // try to grab favicon — silent fail is fine here
   let faviconPath = null
   if (answers.fetchIcon) {
     process.stdout.write(chalk.gray('  fetching favicon... '))
@@ -187,18 +178,11 @@ async function main() {
   console.log(chalk.gray('  npm start        ← run it'))
   console.log(chalk.gray('  npm run build    ← package into installer'))
   console.log()
-
-  // TODO: maybe open the folder in finder/explorer automatically?
-  // TODO: auto run npm install in the generated dir if they say yes?
 }
 
 main().catch(err => {
-  // something actually broke — be loud about it
   console.error(chalk.red.bold('\n  ERROR: ') + err.message)
   if (process.env.DEBUG) console.error(err.stack)
   console.error(chalk.gray('  run with DEBUG=1 for full stack trace'))
   process.exit(1)
 })
-// dark mode prompt added
-// block ads prompt
-// DEBUG env var for stack traces

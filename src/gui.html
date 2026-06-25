@@ -9,7 +9,6 @@
 </head>
 <body>
   <div class="app-wrapper">
-    <!-- LEFT SIDEBAR -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="mascot-container">
@@ -45,9 +44,7 @@
       </div>
     </aside>
 
-    <!-- MAIN CONTAINER -->
     <main class="main-content">
-      <!-- 1. CONFIGURATION VIEW -->
       <section id="form-view" class="view-panel active">
         <form id="pico-generator-form">
           <div class="tab-content active" id="tab-general">
@@ -209,7 +206,6 @@
             </div>
           </div>
 
-          <!-- REAL-TIME CLI PREVIEW (Real Developer Vibe) -->
           <div class="cli-preview-card">
             <div class="cli-header">
               <span class="prompt-icon">terminal</span>
@@ -228,7 +224,6 @@
         </form>
       </section>
 
-      <!-- 2. CONSOLE PROGRESS VIEW -->
       <section id="progress-view" class="view-panel">
         <div class="dev-terminal">
           <div class="terminal-bar">
@@ -247,7 +242,6 @@
         </div>
       </section>
 
-      <!-- 3. SUCCESS / COMPLETE VIEW -->
       <section id="success-view" class="view-panel">
         <div class="success-screen">
           <div class="success-illustration">
@@ -273,7 +267,6 @@
   </div>
 
   <script>
-    // Tab switching logic
     const tabs = document.querySelectorAll('.nav-tab');
     const tabContents = document.querySelectorAll('.tab-content');
     const statusMsg = document.querySelector('.status-msg');
@@ -287,7 +280,6 @@
         const targetTab = tab.getAttribute('data-tab');
         document.getElementById(`tab-${targetTab}`).classList.add('active');
         
-        // System mood message
         const moods = {
           general: 'System: Configuring app sources...',
           window: 'System: Customizing client layout...',
@@ -298,7 +290,6 @@
       });
     });
 
-    // Form inputs and CLI command builder
     const form = document.getElementById('pico-generator-form');
     const urlInput = document.getElementById('url');
     const nameInput = document.getElementById('name');
@@ -310,13 +301,11 @@
     const toolbarToggleWrapper = document.getElementById('toolbar-toggle-wrapper');
     const showToolbarCheckbox = document.getElementById('showToolbar');
 
-    // Toggle custom CSS textarea
     injectCSSCheckbox.addEventListener('change', () => {
       cssBlock.classList.toggle('active', injectCSSCheckbox.checked);
       updateCLIPreview();
     });
 
-    // Window style constraint
     windowStyleSelect.addEventListener('change', () => {
       if (windowStyleSelect.value === 'frameless') {
         toolbarToggleWrapper.style.opacity = '0.35';
@@ -329,7 +318,6 @@
       updateCLIPreview();
     });
 
-    // CLI Preview updates
     function updateCLIPreview() {
       const url = urlInput.value.trim() || 'https://github.com';
       const name = nameInput.value.trim() || 'GitHub Client';
@@ -350,7 +338,6 @@
     form.addEventListener('input', updateCLIPreview);
     windowStyleSelect.addEventListener('change', updateCLIPreview);
 
-    // Auto-fill App Name and validate URL
     let validateTimeout = null;
     urlInput.addEventListener('input', () => {
       clearTimeout(validateTimeout);
@@ -386,13 +373,11 @@
       }, 500);
     });
 
-    // View Management
     function switchActiveView(viewId) {
       document.querySelectorAll('.view-panel').forEach(v => v.classList.remove('active'));
       document.getElementById(viewId).classList.add('active');
     }
 
-    // Terminal Logging
     const logsConsole = document.getElementById('terminal-logs');
     let logUnsubscribe = null;
 
@@ -400,7 +385,6 @@
       const line = document.createElement('div');
       line.className = 'terminal-line';
 
-      // prefix based on content type
       let prefix = '  ';
       if (text.includes('Initializing') || text.includes('Preparing')) prefix = '→ ';
       else if (text.includes('directory') || text.includes('Directory')) prefix = '  ';
@@ -414,7 +398,6 @@
       logsConsole.scrollTop = logsConsole.scrollHeight;
     }
 
-    // Form Submission
     let buildPath = '';
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -467,7 +450,6 @@
       }
     });
 
-    // Action Hooks
     document.getElementById('open-folder-btn').addEventListener('click', () => {
       if (buildPath) window.picoAPI.openFolder(buildPath);
     });
@@ -484,7 +466,6 @@
       updateCLIPreview();
     });
 
-    // Copy CLI command to clipboard
     document.getElementById('copy-cli-btn').addEventListener('click', () => {
       navigator.clipboard.writeText(cliPreview.textContent);
       const oldText = document.getElementById('copy-cli-btn').textContent;
@@ -494,7 +475,6 @@
       }, 1000);
     });
 
-    // Copy compiler logs to clipboard
     document.getElementById('copy-logs-btn').addEventListener('click', () => {
       const logs = Array.from(logsConsole.querySelectorAll('.terminal-line'))
         .map(l => l.textContent)

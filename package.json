@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node src/cli.js",
-    "gui": "electron src/gui.js"
+    "gui": "electron src/gui.js",
+    "test": "node --test tests/*.test.js"
   },
   "keywords": [
     "electron",
