@@ -29,7 +29,7 @@ async function askQuestions() {
       message: 'URL of the website:',
       filter: fixUrl,
       validate: async val => {
-        if (!val) return 'Enter a URL.'
+        if (!val) return 'required'
         const alive = await validateUrl(val).catch(() => false)
         if (!alive) {
           console.log(chalk.yellow('\n  ⚠ could not reach that url — continuing anyway'))
@@ -41,7 +41,7 @@ async function askQuestions() {
       type: 'input',
       name: 'name',
       message: 'App name:',
-      validate: v => v.trim() ? true : 'Enter an app name.'
+      validate: v => v.trim() ? true : 'required'
     },
     {
       type: 'input',

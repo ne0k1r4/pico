@@ -1,27 +1,43 @@
 # Changelog
 
+## [1.2.0] — 2026-06-25
+
+### Added
+- GUI: Electron-based config dashboard (`npm run gui`)
+- Run App Launcher button — spawns generated app directly from GUI
+- Real-time build log output in GUI terminal panel
+- CLI preview pane — shows equivalent CLI command as you configure
+
+### Fixed
+- App launcher was using `exec('npm start')` which silently failed on some setups; now resolves the actual electron binary from the generated app's `node_modules`
+- URL validation no longer blocks submission when site is unreachable
+
+---
+
+## [1.1.0] — 2026-06-14
+
+### Added
+- Dark mode injection via CSS `filter: invert` + hue-rotate
+- Ad/tracker domain blocking via Electron `webRequest` intercept
+- Custom CSS injection at page load
+- System tray support — app hides to tray instead of quitting
+- Always-on-top window option
+- Window size and position persistence
+
+### Fixed
+- Window position restored off-screen on single-monitor setups after disconnecting external display
+- New-window events were spawning extra Electron windows instead of opening in browser
+
+---
+
 ## [1.0.0] — 2026-06-14
 
 ### Added
-- CLI with interactive prompts (inquirer)
+- CLI with interactive prompts
 - Electron webview shell with navigation toolbar
-- Frameless / immersive window mode
-- System tray support — minimize to tray on close
-- Always-on-top option
-- Custom CSS injection into every page load
-- Window size & position persistence across sessions
-- Smart URL bar — bare domains, search fallback
-- Auto favicon fetch with Google fallback
-- Loading splash screen
-- Correct macOS app menu (About / Hide / Quit)
-- Multi-screen position restore safety check
-- External links open in default browser
-- Live favicon in URL bar
-- Page title reflected in window title
-- Gradient fallback icon generated from app initial
-- Cross-platform build config: Windows (.exe), macOS (.dmg), Linux (.AppImage/.deb)
-
-### Fixed
-- Window position restored off-screen on single-monitor setups
-- New-window events were spawning extra Electron windows
-- macOS menu missing standard app entries
+- Frameless window mode
+- Favicon fetch with Google fallback
+- Gradient fallback icon generated from app name initial
+- Multi-screen safe window position restore
+- macOS standard app menu
+- Cross-platform build config: Windows, macOS, Linux

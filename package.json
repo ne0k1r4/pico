@@ -19,7 +19,7 @@
     "website",
     "native"
   ],
-  "author": "Alex Chen",
+  "author": "ne0k1r4 <neok1ra@proton.me>",
   "license": "MIT",
   "dependencies": {
     "chalk": "^4.1.2",
