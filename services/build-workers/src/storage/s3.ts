@@ -10,8 +10,8 @@ export class S3Storage {
   constructor(config: WorkerConfig) {
     this.client = new S3Client({
       region: config.S3_REGION,
-      endpoint: config.S3_ENDPOINT,
-      forcePathStyle: config.S3_FORCE_PATH_STYLE
+      forcePathStyle: config.S3_FORCE_PATH_STYLE,
+      ...(config.S3_ENDPOINT !== undefined ? { endpoint: config.S3_ENDPOINT } : {})
     });
   }
 

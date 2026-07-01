@@ -23,5 +23,8 @@
     "@types/bun": "^1.1.6",
     "@types/tar": "^6.1.13",
     "typescript": "^5.5.3"
+  },
+  "overrides": {
+    "ioredis": "^5.4.1"
   }
 }

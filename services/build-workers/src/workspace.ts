@@ -1,7 +1,7 @@
 import { mkdtemp, mkdir, rm, writeFile, readdir, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import tar from "tar";
+import { x as tarExtract } from "tar";
 import type { BuildPlatform } from "./types";
 
 export async function createWorkspace(root: string, buildId: string, platform: BuildPlatform): Promise<string> {
@@ -20,7 +20,7 @@ export async function extractSourceArchive(workspace: string, archive: Uint8Arra
   const sourceDir = path.join(workspace, "source");
   await mkdir(sourceDir, { recursive: true });
   await writeFile(archivePath, archive);
-  await tar.x({
+  await tarExtract({
     file: archivePath,
     cwd: sourceDir,
     strip: 0,
