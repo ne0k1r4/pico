@@ -1,5 +1,7 @@
 # Android APK Capability
 
+- [x] Generate, build, and validate a debug APK for sujalinfo.in.
+
 - [x] Reproduce and correct current generator, CLI, and GUI defects.
 - [x] Validate desktop and Android generation paths after the fixes.
 - [x] Commit the verified bug fixes with updated tracker status.
