@@ -1,5 +1,11 @@
 # Android APK Capability
 
+- [ ] Create and deliver the final Git-history ZIP from the enhanced Pico v1.5.0 repository.
+
+- [x] Synchronize from GitHub and use the merged Pico v1.4.1 repository as the baseline.
+
+- [x] Add real-time APK build status indicators to the desktop interface.
+
 - [x] Add CI status badges and an Android worker deployment manifest, then publish the update.
 
 - [x] Update the README for Pico 1.4.1, Android APK generation, and build-worker deployment.

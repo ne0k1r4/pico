@@ -144,6 +144,8 @@ npm run gui
 
 Select **Android (.APK)** under packaging targets to create a mobile project. For Android-only output, the **Run App Launcher** action explains that an emulator or physical device is required; use **Compile Native Installer** to prepare and build the APK instead.
 
+During an Android build, the terminal view now adds a live status panel for dependency installation, Android project preparation, Capacitor asset synchronization, Gradle compilation, and the final APK artifact. When the build completes, the panel displays the exact `app-debug.apk` path; an error state identifies the stage that needs attention.
+
 ## Build-worker deployment
 
 `services/build-workers/` contains queue consumers for unattended artifact builds. The worker validates a source archive, checks its SHA-256 digest, builds the selected platform, finds output artifacts, and uploads the artifacts and JSONL build log to object storage.

@@ -1,552 +1,897 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pico App Generator — Developer Workspace</title>
-  <link rel="stylesheet" href="gui.css">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-</head>
-<body>
-  <div class="app-wrapper">
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <div class="mascot-container">
-          <img src="../assets/mascot.png" alt="Pico Mascot" class="mascot-img">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pico App Generator — Developer Workspace</title>
+    <link rel="stylesheet" href="gui.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="app-wrapper">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="mascot-container">
+            <img
+              src="../assets/mascot.png"
+              alt="Pico Mascot"
+              class="mascot-img"
+            />
+          </div>
+          <div class="brand-title">
+            <h2>pico-chan</h2>
+            <span class="version-tag">v1.5.0</span>
+          </div>
         </div>
-        <div class="brand-title">
-          <h2>pico-chan</h2>
-          <span class="version-tag">v1.4.1</span>
+
+        <nav class="nav-tabs">
+          <button class="nav-tab active" data-tab="general">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10"
+              />
+            </svg>
+            <span>General Config</span>
+          </button>
+          <button class="nav-tab" data-tab="window">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <line x1="9" y1="3" x2="9" y2="21" />
+            </svg>
+            <span>Window Style</span>
+          </button>
+          <button class="nav-tab" data-tab="injections">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polyline points="16 18 22 12 16 6" />
+              <polyline points="8 6 2 12 8 18" />
+              <line x1="12" y1="2" x2="12" y2="22" />
+            </svg>
+            <span>CSS & Filters</span>
+          </button>
+          <button class="nav-tab" data-tab="build">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+              />
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+              <line x1="12" y1="22.08" x2="12" y2="12" />
+            </svg>
+            <span>Build Options</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <p class="status-msg">System: Idle</p>
+          <div
+            class="active-flags-badge"
+            style="
+              font-family: var(--font-mono);
+              font-size: 10px;
+              color: var(--accent-cyan);
+              margin-top: 6px;
+            "
+          >
+            Pipeline: Ready
+          </div>
         </div>
-      </div>
+      </aside>
 
-      <nav class="nav-tabs">
-        <button class="nav-tab active" data-tab="general">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10"/></svg>
-          <span>General Config</span>
-        </button>
-        <button class="nav-tab" data-tab="window">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-          <span>Window Style</span>
-        </button>
-        <button class="nav-tab" data-tab="injections">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
-          <span>CSS & Filters</span>
-        </button>
-        <button class="nav-tab" data-tab="build">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-          <span>Build Options</span>
-        </button>
-      </nav>
+      <main class="main-content">
+        <section id="form-view" class="view-panel active">
+          <form id="pico-generator-form">
+            <div class="tab-content active" id="tab-general">
+              <h3 class="section-title">General Application Settings</h3>
 
-      <div class="sidebar-footer">
-        <p class="status-msg">System: Idle</p>
-        <div class="active-flags-badge" style="font-family: var(--font-mono); font-size: 10px; color: var(--accent-cyan); margin-top: 6px;">Pipeline: Ready</div>
-      </div>
-    </aside>
-
-    <main class="main-content">
-      <section id="form-view" class="view-panel active">
-        <form id="pico-generator-form">
-          <div class="tab-content active" id="tab-general">
-            <h3 class="section-title">General Application Settings</h3>
-            
-            <div class="input-card">
-              <div class="form-group">
-                <label for="url">Target URL</label>
-                <div class="url-input-wrapper">
-                  <input type="text" id="url" name="url" placeholder="https://github.com" required autocomplete="off">
-                  <span id="url-status" class="status-dot"></span>
+              <div class="input-card">
+                <div class="form-group">
+                  <label for="url">Target URL</label>
+                  <div class="url-input-wrapper">
+                    <input
+                      type="text"
+                      id="url"
+                      name="url"
+                      placeholder="https://github.com"
+                      required
+                      autocomplete="off"
+                    />
+                    <span id="url-status" class="status-dot"></span>
+                  </div>
+                  <p class="desc-text">
+                    The website URL you want to convert into a desktop program.
+                  </p>
                 </div>
-                <p class="desc-text">The website URL you want to convert into a desktop program.</p>
-              </div>
 
-              <div class="form-group">
-                <label for="name">App Name</label>
-                <input type="text" id="name" name="name" placeholder="GitHub Client" required autocomplete="off">
-                <p class="desc-text">Visual desktop name (e.g. My Website App).</p>
-              </div>
-
-              <div class="form-group">
-                <label for="outputDir">Output Folder</label>
-                <input type="text" id="outputDir" name="outputDir" value="./apps" required autocomplete="off">
-              </div>
-
-              <div class="form-group">
-                <label for="userAgent">Custom User Agent</label>
-                <input type="text" id="userAgent" name="userAgent" placeholder="Mozilla/5.0 ... (leave empty for default)" autocomplete="off">
-                <p class="desc-text">Override the default browser User-Agent header.</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="tab-content" id="tab-window">
-            <h3 class="section-title">Window Sizing & Aesthetics</h3>
-            
-            <div class="input-card">
-              <div class="form-group">
-                <label for="windowStyle">Window Style Mode</label>
-                <select id="windowStyle" name="windowStyle">
-                  <option value="normal">Normal (Standard platform title bar)</option>
-                  <option value="frameless">Frameless (Immersive drag layout, traffic lights on mac)</option>
-                  <option value="minimal">Minimal (Modern slim navigation bar)</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label>Default Bounds</label>
-                <div class="dimension-row">
-                  <div>
-                    <label for="width" class="sub-label">Width (px)</label>
-                    <input type="number" id="width" name="width" value="1280" min="400">
-                  </div>
-                  <div>
-                    <label for="height" class="sub-label">Height (px)</label>
-                    <input type="number" id="height" name="height" value="800" min="300">
-                  </div>
+                <div class="form-group">
+                  <label for="name">App Name</label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    placeholder="GitHub Client"
+                    required
+                    autocomplete="off"
+                  />
+                  <p class="desc-text">
+                    Visual desktop name (e.g. My Website App).
+                  </p>
                 </div>
-              </div>
 
-              <div class="toggles-grid">
-                <label class="toggle-row">
-                  <input type="checkbox" id="alwaysOnTop" name="alwaysOnTop">
-                  <span class="custom-toggle"></span>
-                  <div class="toggle-texts">
-                    <span class="title">Always on Top</span>
-                    <span class="desc">Keep app floating above all other windows</span>
-                  </div>
-                </label>
+                <div class="form-group">
+                  <label for="outputDir">Output Folder</label>
+                  <input
+                    type="text"
+                    id="outputDir"
+                    name="outputDir"
+                    value="./apps"
+                    required
+                    autocomplete="off"
+                  />
+                </div>
 
-                <label class="toggle-row">
-                  <input type="checkbox" id="rememberSize" name="rememberSize" checked>
-                  <span class="custom-toggle"></span>
-                  <div class="toggle-texts">
-                    <span class="title">Remember Bounds</span>
-                    <span class="desc">Save position and size across window launches</span>
-                  </div>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div class="tab-content" id="tab-injections">
-            <h3 class="section-title">CSS Injection & Tracker Blocking</h3>
-            
-            <div class="input-card">
-              <div class="toggles-grid">
-                <label class="toggle-row">
-                  <input type="checkbox" id="darkMode" name="darkMode">
-                  <span class="custom-toggle"></span>
-                  <div class="toggle-texts">
-                    <span class="title">Force Dark Mode</span>
-                    <span class="desc">Invert page layout and re-invert graphic elements</span>
-                  </div>
-                </label>
-
-                <label class="toggle-row">
-                  <input type="checkbox" id="blockAds" name="blockAds">
-                  <span class="custom-toggle"></span>
-                  <div class="toggle-texts">
-                    <span class="title">Block Ads & Trackers</span>
-                    <span class="desc">Block Google, Facebook, Outbrain, and ad domains</span>
-                  </div>
-                </label>
-
-                <label class="toggle-row">
-                  <input type="checkbox" id="injectCSS" name="injectCSS">
-                  <span class="custom-toggle"></span>
-                  <div class="toggle-texts">
-                    <span class="title">Inject Custom CSS</span>
-                    <span class="desc">Inject global custom stylesheet styles</span>
-                  </div>
-                </label>
-
-                <label class="toggle-row">
-                  <input type="checkbox" id="injectJS" name="injectJS">
-                  <span class="custom-toggle"></span>
-                  <div class="toggle-texts">
-                    <span class="title">Inject Custom JS</span>
-                    <span class="desc">Inject custom Javascript at document-ready</span>
-                  </div>
-                </label>
-              </div>
-
-              <div id="css-block" class="css-editor-block collapsible">
-                <label for="customCSS">Custom CSS styles</label>
-                <textarea id="customCSS" name="customCSS" rows="4" placeholder="* { font-family: 'JetBrains Mono', sans-serif !important; }"></textarea>
-              </div>
-
-              <div id="js-block" class="css-editor-block collapsible">
-                <label for="customJS">Custom JS script</label>
-                <textarea id="customJS" name="customJS" rows="4" placeholder="console.log('App successfully loaded!');"></textarea>
-              </div>
-            </div>
-          </div>
-
-          <div class="tab-content" id="tab-build">
-            <h3 class="section-title">Packaging Options</h3>
-            
-            <div class="input-card">
-              <div class="toggles-grid">
-                <label class="toggle-row" id="toolbar-toggle-wrapper">
-                  <input type="checkbox" id="showToolbar" name="showToolbar" checked>
-                  <span class="custom-toggle"></span>
-                  <div class="toggle-texts">
-                    <span class="title">Show Navigation Toolbar</span>
-                    <span class="desc">Include navigation controls and active URL input bar</span>
-                  </div>
-                </label>
-
-                <label class="toggle-row">
-                  <input type="checkbox" id="systemTray" name="systemTray">
-                  <span class="custom-toggle"></span>
-                  <div class="toggle-texts">
-                    <span class="title">Minimize to System Tray</span>
-                    <span class="desc">Hides to system status bar tray instead of shutting down</span>
-                  </div>
-                </label>
-
-                <label class="toggle-row">
-                  <input type="checkbox" id="autoUpdate" name="autoUpdate">
-                  <span class="custom-toggle"></span>
-                  <div class="toggle-texts">
-                    <span class="title">Automatic Update Checker</span>
-                    <span class="desc">Polls endpoint URL for version updates on app launch</span>
-                  </div>
-                </label>
-              </div>
-
-              <div class="form-group" style="margin-top: 24px;">
-                <label>Target Executables</label>
-                <div class="platforms-list">
-                  <label class="platform-item">
-                    <input type="checkbox" name="platforms" value="win">
-                    <span class="custom-checkbox">Windows (.exe)</span>
-                  </label>
-                  <label class="platform-item">
-                    <input type="checkbox" name="platforms" value="mac">
-                    <span class="custom-checkbox">macOS (.dmg)</span>
-                  </label>
-                  <label class="platform-item">
-                    <input type="checkbox" name="platforms" value="linux" checked>
-                    <span class="custom-checkbox">Linux (.AppImage)</span>
-                  </label>
-                  <label class="platform-item">
-                    <input type="checkbox" name="platforms" value="android">
-                    <span class="custom-checkbox">Android (.APK)</span>
-                  </label>
+                <div class="form-group">
+                  <label for="userAgent">Custom User Agent</label>
+                  <input
+                    type="text"
+                    id="userAgent"
+                    name="userAgent"
+                    placeholder="Mozilla/5.0 ... (leave empty for default)"
+                    autocomplete="off"
+                  />
+                  <p class="desc-text">
+                    Override the default browser User-Agent header.
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="cli-preview-card">
-            <div class="cli-header">
-              <span class="prompt-icon">terminal</span>
-              <span class="title">CLI Command Preview</span>
-              <button type="button" class="btn-copy-cli" id="copy-cli-btn">Copy</button>
+            <div class="tab-content" id="tab-window">
+              <h3 class="section-title">Window Sizing & Aesthetics</h3>
+
+              <div class="input-card">
+                <div class="form-group">
+                  <label for="windowStyle">Window Style Mode</label>
+                  <select id="windowStyle" name="windowStyle">
+                    <option value="normal">
+                      Normal (Standard platform title bar)
+                    </option>
+                    <option value="frameless">
+                      Frameless (Immersive drag layout, traffic lights on mac)
+                    </option>
+                    <option value="minimal">
+                      Minimal (Modern slim navigation bar)
+                    </option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Default Bounds</label>
+                  <div class="dimension-row">
+                    <div>
+                      <label for="width" class="sub-label">Width (px)</label>
+                      <input
+                        type="number"
+                        id="width"
+                        name="width"
+                        value="1280"
+                        min="400"
+                      />
+                    </div>
+                    <div>
+                      <label for="height" class="sub-label">Height (px)</label>
+                      <input
+                        type="number"
+                        id="height"
+                        name="height"
+                        value="800"
+                        min="300"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="toggles-grid">
+                  <label class="toggle-row">
+                    <input
+                      type="checkbox"
+                      id="alwaysOnTop"
+                      name="alwaysOnTop"
+                    />
+                    <span class="custom-toggle"></span>
+                    <div class="toggle-texts">
+                      <span class="title">Always on Top</span>
+                      <span class="desc"
+                        >Keep app floating above all other windows</span
+                      >
+                    </div>
+                  </label>
+
+                  <label class="toggle-row">
+                    <input
+                      type="checkbox"
+                      id="rememberSize"
+                      name="rememberSize"
+                      checked
+                    />
+                    <span class="custom-toggle"></span>
+                    <div class="toggle-texts">
+                      <span class="title">Remember Bounds</span>
+                      <span class="desc"
+                        >Save position and size across window launches</span
+                      >
+                    </div>
+                  </label>
+                </div>
+              </div>
             </div>
-            <code id="cli-cmd-preview" class="select-text">pico --url https://github.com --name "GitHub Client"</code>
-          </div>
 
-          <div class="submit-action-row">
-            <button type="submit" class="btn-launch-generation">
-              <span>Run Build Pipeline</span>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 17 18 12 13 7"/><line x1="6" y1="12" x2="18" y2="12"/></svg>
-            </button>
-          </div>
-        </form>
-      </section>
+            <div class="tab-content" id="tab-injections">
+              <h3 class="section-title">CSS Injection & Tracker Blocking</h3>
 
-      <section id="progress-view" class="view-panel">
-        <div class="dev-terminal">
-          <div class="terminal-bar">
-            <div class="terminal-actions">
-              <span class="dot red"></span>
-              <span class="dot yellow"></span>
-              <span class="dot green"></span>
+              <div class="input-card">
+                <div class="toggles-grid">
+                  <label class="toggle-row">
+                    <input type="checkbox" id="darkMode" name="darkMode" />
+                    <span class="custom-toggle"></span>
+                    <div class="toggle-texts">
+                      <span class="title">Force Dark Mode</span>
+                      <span class="desc"
+                        >Invert page layout and re-invert graphic elements</span
+                      >
+                    </div>
+                  </label>
+
+                  <label class="toggle-row">
+                    <input type="checkbox" id="blockAds" name="blockAds" />
+                    <span class="custom-toggle"></span>
+                    <div class="toggle-texts">
+                      <span class="title">Block Ads & Trackers</span>
+                      <span class="desc"
+                        >Block Google, Facebook, Outbrain, and ad domains</span
+                      >
+                    </div>
+                  </label>
+
+                  <label class="toggle-row">
+                    <input type="checkbox" id="injectCSS" name="injectCSS" />
+                    <span class="custom-toggle"></span>
+                    <div class="toggle-texts">
+                      <span class="title">Inject Custom CSS</span>
+                      <span class="desc"
+                        >Inject global custom stylesheet styles</span
+                      >
+                    </div>
+                  </label>
+
+                  <label class="toggle-row">
+                    <input type="checkbox" id="injectJS" name="injectJS" />
+                    <span class="custom-toggle"></span>
+                    <div class="toggle-texts">
+                      <span class="title">Inject Custom JS</span>
+                      <span class="desc"
+                        >Inject custom Javascript at document-ready</span
+                      >
+                    </div>
+                  </label>
+                </div>
+
+                <div id="css-block" class="css-editor-block collapsible">
+                  <label for="customCSS">Custom CSS styles</label>
+                  <textarea
+                    id="customCSS"
+                    name="customCSS"
+                    rows="4"
+                    placeholder="* { font-family: 'JetBrains Mono', sans-serif !important; }"
+                  ></textarea>
+                </div>
+
+                <div id="js-block" class="css-editor-block collapsible">
+                  <label for="customJS">Custom JS script</label>
+                  <textarea
+                    id="customJS"
+                    name="customJS"
+                    rows="4"
+                    placeholder="console.log('App successfully loaded!');"
+                  ></textarea>
+                </div>
+              </div>
             </div>
-            <div class="terminal-title">Build Compiler Output</div>
-            <div class="spinner-icon"></div>
+
+            <div class="tab-content" id="tab-build">
+              <h3 class="section-title">Packaging Options</h3>
+
+              <div class="input-card">
+                <div class="toggles-grid">
+                  <label class="toggle-row" id="toolbar-toggle-wrapper">
+                    <input
+                      type="checkbox"
+                      id="showToolbar"
+                      name="showToolbar"
+                      checked
+                    />
+                    <span class="custom-toggle"></span>
+                    <div class="toggle-texts">
+                      <span class="title">Show Navigation Toolbar</span>
+                      <span class="desc"
+                        >Include navigation controls and active URL input
+                        bar</span
+                      >
+                    </div>
+                  </label>
+
+                  <label class="toggle-row">
+                    <input type="checkbox" id="systemTray" name="systemTray" />
+                    <span class="custom-toggle"></span>
+                    <div class="toggle-texts">
+                      <span class="title">Minimize to System Tray</span>
+                      <span class="desc"
+                        >Hides to system status bar tray instead of shutting
+                        down</span
+                      >
+                    </div>
+                  </label>
+
+                  <label class="toggle-row">
+                    <input type="checkbox" id="autoUpdate" name="autoUpdate" />
+                    <span class="custom-toggle"></span>
+                    <div class="toggle-texts">
+                      <span class="title">Automatic Update Checker</span>
+                      <span class="desc"
+                        >Polls endpoint URL for version updates on app
+                        launch</span
+                      >
+                    </div>
+                  </label>
+                </div>
+
+                <div class="form-group" style="margin-top: 24px">
+                  <label>Target Executables</label>
+                  <div class="platforms-list">
+                    <label class="platform-item">
+                      <input type="checkbox" name="platforms" value="win" />
+                      <span class="custom-checkbox">Windows (.exe)</span>
+                    </label>
+                    <label class="platform-item">
+                      <input type="checkbox" name="platforms" value="mac" />
+                      <span class="custom-checkbox">macOS (.dmg)</span>
+                    </label>
+                    <label class="platform-item">
+                      <input
+                        type="checkbox"
+                        name="platforms"
+                        value="linux"
+                        checked
+                      />
+                      <span class="custom-checkbox">Linux (.AppImage)</span>
+                    </label>
+                    <label class="platform-item">
+                      <input type="checkbox" name="platforms" value="android" />
+                      <span class="custom-checkbox">Android (.APK)</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cli-preview-card">
+              <div class="cli-header">
+                <span class="prompt-icon">terminal</span>
+                <span class="title">CLI Command Preview</span>
+                <button type="button" class="btn-copy-cli" id="copy-cli-btn">
+                  Copy
+                </button>
+              </div>
+              <code id="cli-cmd-preview" class="select-text"
+                >pico --url https://github.com --name "GitHub Client"</code
+              >
+            </div>
+
+            <div class="submit-action-row">
+              <button type="submit" class="btn-launch-generation">
+                <span>Run Build Pipeline</span>
+                <svg
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <polyline points="13 17 18 12 13 7" />
+                  <line x1="6" y1="12" x2="18" y2="12" />
+                </svg>
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section id="progress-view" class="view-panel">
+          <div
+            id="apk-build-status"
+            class="apk-build-status"
+            hidden
+            aria-live="polite"
+          >
+            <div class="apk-status-header">
+              <div>
+                <span class="eyebrow">Android pipeline</span>
+                <h2>APK build status</h2>
+              </div>
+              <span id="apk-build-state" class="apk-build-state">Waiting</span>
+            </div>
+            <p id="apk-build-message" class="apk-build-message">
+              The APK build has not started yet.
+            </p>
+            <ol class="apk-stage-list">
+              <li data-stage="dependencies">
+                <span class="stage-marker"></span><span>Dependencies</span>
+              </li>
+              <li data-stage="native-project">
+                <span class="stage-marker"></span><span>Native project</span>
+              </li>
+              <li data-stage="sync">
+                <span class="stage-marker"></span><span>Asset sync</span>
+              </li>
+              <li data-stage="gradle">
+                <span class="stage-marker"></span><span>Gradle compile</span>
+              </li>
+              <li data-stage="artifact">
+                <span class="stage-marker"></span><span>APK artifact</span>
+              </li>
+            </ol>
+            <div id="apk-artifact-path" class="apk-artifact-path" hidden></div>
           </div>
-          <div id="terminal-logs" class="terminal-logs select-text"></div>
-          <div class="terminal-footer">
-            <button id="copy-logs-btn" class="btn-terminal-action">Copy Logs</button>
+          <div class="dev-terminal">
+            <div class="terminal-bar">
+              <div class="terminal-actions">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+              </div>
+              <div id="terminal-title" class="terminal-title">
+                Build Compiler Output
+              </div>
+              <div id="build-spinner" class="spinner-icon"></div>
+            </div>
+            <div id="terminal-logs" class="terminal-logs select-text"></div>
+            <div class="terminal-footer">
+              <button id="copy-logs-btn" class="btn-terminal-action">
+                Copy Logs
+              </button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section id="success-view" class="view-panel">
-        <div class="success-screen">
-          <div class="success-illustration">
-            <div class="glow-ring"></div>
-            <div class="check-badge">✓</div>
+        <section id="success-view" class="view-panel">
+          <div class="success-screen">
+            <div class="success-illustration">
+              <div class="glow-ring"></div>
+              <div class="check-badge">✓</div>
+            </div>
+            <h2>App Generated Successfully!</h2>
+            <p class="sub-heading">
+              Your native client is ready for execution.
+            </p>
+
+            <div class="details-box select-text">
+              <span class="label">Distribution Path</span>
+              <span id="dist-path" class="value"></span>
+            </div>
+
+            <div class="actions-box">
+              <button id="run-app-btn" class="success-btn main">
+                Run App Launcher
+              </button>
+              <button
+                id="build-installer-btn"
+                class="success-btn main"
+                style="
+                  background: linear-gradient(
+                    135deg,
+                    var(--accent-cyan) 0%,
+                    var(--accent-violet) 100%
+                  );
+                  margin-top: 4px;
+                "
+              >
+                Compile Native Installer
+              </button>
+              <button id="open-folder-btn" class="success-btn sub">
+                Open Output Folder
+              </button>
+              <button id="restart-btn" class="success-btn link">
+                Generate Another App
+              </button>
+            </div>
           </div>
-          <h2>App Generated Successfully!</h2>
-          <p class="sub-heading">Your native client is ready for execution.</p>
+        </section>
+      </main>
+    </div>
 
-          <div class="details-box select-text">
-            <span class="label">Distribution Path</span>
-            <span id="dist-path" class="value"></span>
-          </div>
+    <script>
+      const tabs = document.querySelectorAll(".nav-tab");
+      const tabContents = document.querySelectorAll(".tab-content");
+      const statusMsg = document.querySelector(".status-msg");
 
-          <div class="actions-box">
-            <button id="run-app-btn" class="success-btn main">Run App Launcher</button>
-            <button id="build-installer-btn" class="success-btn main" style="background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-violet) 100%); margin-top: 4px;">Compile Native Installer</button>
-            <button id="open-folder-btn" class="success-btn sub">Open Output Folder</button>
-            <button id="restart-btn" class="success-btn link">Generate Another App</button>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          tabs.forEach((t) => t.classList.remove("active"));
+          tabContents.forEach((c) => c.classList.remove("active"));
 
-  <script>
-    const tabs = document.querySelectorAll('.nav-tab');
-    const tabContents = document.querySelectorAll('.tab-content');
-    const statusMsg = document.querySelector('.status-msg');
+          tab.classList.add("active");
+          const targetTab = tab.getAttribute("data-tab");
+          document.getElementById(`tab-${targetTab}`).classList.add("active");
 
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        tabContents.forEach(c => c.classList.remove('active'));
-
-        tab.classList.add('active');
-        const targetTab = tab.getAttribute('data-tab');
-        document.getElementById(`tab-${targetTab}`).classList.add('active');
-        
-        const moods = {
-          general: 'System: Configuring app sources...',
-          window: 'System: Customizing client layout...',
-          injections: 'System: Tweaking stylesheets & filters...',
-          build: 'System: Setting compilation targets...'
-        };
-        statusMsg.textContent = moods[targetTab] || 'System: Idle';
-      });
-    });
-
-    const form = document.getElementById('pico-generator-form');
-    const urlInput = document.getElementById('url');
-    const nameInput = document.getElementById('name');
-    const urlStatus = document.getElementById('url-status');
-    const cliPreview = document.getElementById('cli-cmd-preview');
-    const injectCSSCheckbox = document.getElementById('injectCSS');
-    const cssBlock = document.getElementById('css-block');
-    const injectJSCheckbox = document.getElementById('injectJS');
-    const jsBlock = document.getElementById('js-block');
-    const windowStyleSelect = document.getElementById('windowStyle');
-    const toolbarToggleWrapper = document.getElementById('toolbar-toggle-wrapper');
-    const showToolbarCheckbox = document.getElementById('showToolbar');
-
-    injectCSSCheckbox.addEventListener('change', () => {
-      cssBlock.classList.toggle('active', injectCSSCheckbox.checked);
-      updateCLIPreview();
-    });
-
-    injectJSCheckbox.addEventListener('change', () => {
-      jsBlock.classList.toggle('active', injectJSCheckbox.checked);
-      updateCLIPreview();
-    });
-
-    windowStyleSelect.addEventListener('change', () => {
-      if (windowStyleSelect.value === 'frameless') {
-        toolbarToggleWrapper.style.opacity = '0.35';
-        toolbarToggleWrapper.style.pointerEvents = 'none';
-        showToolbarCheckbox.checked = false;
-      } else {
-        toolbarToggleWrapper.style.opacity = '1';
-        toolbarToggleWrapper.style.pointerEvents = 'auto';
-      }
-      updateCLIPreview();
-    });
-
-    function updateCLIPreview() {
-      const url = urlInput.value.trim() || 'https://github.com';
-      const name = nameInput.value.trim() || 'GitHub Client';
-      const style = windowStyleSelect.value;
-      const ua = document.getElementById('userAgent').value.trim();
-      
-      let cmd = `pico --url "${url}" --name "${name}"`;
-      if (style !== 'normal') cmd += ` --style ${style}`;
-      if (!showToolbarCheckbox.checked && style !== 'frameless') cmd += ` --no-toolbar`;
-      if (document.getElementById('systemTray').checked) cmd += ` --tray`;
-      if (document.getElementById('alwaysOnTop').checked) cmd += ` --always-on-top`;
-      if (document.getElementById('darkMode').checked) cmd += ` --dark`;
-      if (document.getElementById('blockAds').checked) cmd += ` --block-ads`;
-      if (injectCSSCheckbox.checked) cmd += ` --inject-css`;
-      if (injectJSCheckbox.checked) cmd += ` --inject-js`;
-      if (ua) cmd += ` --user-agent "${ua}"`;
-      const platforms = Array.from(form.querySelectorAll('input[name="platforms"]:checked'))
-        .map(input => input.value);
-      if (platforms.length && !(platforms.length === 1 && platforms[0] === 'linux')) {
-        cmd += ` --platforms ${platforms.join(',')}`;
-      }
-      
-      cliPreview.textContent = cmd;
-    }
-
-    form.addEventListener('input', updateCLIPreview);
-    windowStyleSelect.addEventListener('change', updateCLIPreview);
-
-    let validateTimeout = null;
-    urlInput.addEventListener('input', () => {
-      clearTimeout(validateTimeout);
-      const val = urlInput.value.trim();
-      if (!val) {
-        urlStatus.className = 'status-dot';
-        return;
-      }
-
-      validateTimeout = setTimeout(async () => {
-        let cleanUrl = val;
-        if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
-          cleanUrl = 'https://' + cleanUrl;
-        }
-
-        urlStatus.className = 'status-dot loading';
-        const alive = await window.picoAPI.validateUrl(cleanUrl);
-        
-        if (alive) {
-          urlStatus.className = 'status-dot success';
-          if (!nameInput.value.trim()) {
-            try {
-              const urlObj = new URL(cleanUrl);
-              let parts = urlObj.hostname.split('.');
-              if (parts.length > 2 && parts[0] === 'www') parts.shift();
-              nameInput.value = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
-              updateCLIPreview();
-            } catch (err) {}
-          }
-        } else {
-          urlStatus.className = 'status-dot error';
-        }
-      }, 500);
-    });
-
-    function switchActiveView(viewId) {
-      document.querySelectorAll('.view-panel').forEach(v => v.classList.remove('active'));
-      document.getElementById(viewId).classList.add('active');
-    }
-
-    const logsConsole = document.getElementById('terminal-logs');
-    let logUnsubscribe = null;
-
-    function logToTerminal(text) {
-      const line = document.createElement('div');
-      line.className = 'terminal-line';
-
-      let prefix = '  ';
-      if (text.includes('Initializing') || text.includes('Preparing')) prefix = '→ ';
-      else if (text.includes('directory') || text.includes('Directory')) prefix = '  ';
-      else if (text.includes('complete') || text.includes('complete') || text.includes('launched')) prefix = '✓ ';
-      else if (text.includes('Installing') || text.includes('installed')) prefix = '↓ ';
-      else if (text.includes('Launching') || text.includes('Starting')) prefix = '▶ ';
-      else if (text.includes('Error') || text.includes('failed') || text.includes('Failed')) prefix = '✗ ';
-
-      line.textContent = prefix + text;
-      logsConsole.appendChild(line);
-      logsConsole.scrollTop = logsConsole.scrollHeight;
-    }
-
-    let buildPath = '';
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const formData = new FormData(form);
-      const platforms = Array.from(formData.getAll('platforms'));
-      if (platforms.length === 0) {
-        alert('Please choose at least one packaging target (Windows, macOS, Linux, or Android).');
-        return;
-      }
-
-      const config = {
-        url: urlInput.value.trim(),
-        name: nameInput.value.trim(),
-        outputDir: document.getElementById('outputDir').value.trim(),
-        width: parseInt(document.getElementById('width').value, 10),
-        height: parseInt(document.getElementById('height').value, 10),
-        windowStyle: windowStyleSelect.value,
-        showToolbar: showToolbarCheckbox.checked,
-        systemTray: document.getElementById('systemTray').checked,
-        alwaysOnTop: document.getElementById('alwaysOnTop').checked,
-        darkMode: document.getElementById('darkMode').checked,
-        injectCSS: injectCSSCheckbox.checked,
-        customCSS: document.getElementById('customCSS').value,
-        injectJS: injectJSCheckbox.checked,
-        customJS: document.getElementById('customJS').value,
-        userAgent: document.getElementById('userAgent').value.trim(),
-        blockAds: document.getElementById('blockAds').checked,
-        autoUpdate: document.getElementById('autoUpdate').checked,
-        rememberSize: document.getElementById('rememberSize').checked,
-        platforms: platforms
-      };
-
-      logsConsole.innerHTML = '';
-      statusMsg.textContent = 'System: Working...';
-      switchActiveView('progress-view');
-
-      if (logUnsubscribe) logUnsubscribe();
-      logUnsubscribe = window.picoAPI.onLog((text) => logToTerminal(text));
-
-      const result = await window.picoAPI.generateApp(config);
-
-      if (result.success) {
-        buildPath = result.dir;
-        document.getElementById('dist-path').textContent = result.dir;
-        statusMsg.textContent = 'System: Complete';
-        setTimeout(() => {
-          switchActiveView('success-view');
-        }, 1200);
-      } else {
-        alert(`Compilation failed: ${result.error}`);
-        statusMsg.textContent = 'System: Idle';
-        switchActiveView('form-view');
-      }
-    });
-
-    document.getElementById('open-folder-btn').addEventListener('click', () => {
-      if (buildPath) window.picoAPI.openFolder(buildPath);
-    });
-
-    document.getElementById('run-app-btn').addEventListener('click', () => {
-      if (buildPath) window.picoAPI.runApp(buildPath);
-    });
-
-    document.getElementById('build-installer-btn').addEventListener('click', () => {
-      if (buildPath) {
-        logsConsole.innerHTML = '';
-        statusMsg.textContent = 'System: Packaging...';
-        switchActiveView('progress-view');
-        window.picoAPI.buildApp(buildPath).then(() => {
-          statusMsg.textContent = 'System: Complete';
+          const moods = {
+            general: "System: Configuring app sources...",
+            window: "System: Customizing client layout...",
+            injections: "System: Tweaking stylesheets & filters...",
+            build: "System: Setting compilation targets...",
+          };
+          statusMsg.textContent = moods[targetTab] || "System: Idle";
         });
+      });
+
+      const form = document.getElementById("pico-generator-form");
+      const urlInput = document.getElementById("url");
+      const nameInput = document.getElementById("name");
+      const urlStatus = document.getElementById("url-status");
+      const cliPreview = document.getElementById("cli-cmd-preview");
+      const injectCSSCheckbox = document.getElementById("injectCSS");
+      const cssBlock = document.getElementById("css-block");
+      const injectJSCheckbox = document.getElementById("injectJS");
+      const jsBlock = document.getElementById("js-block");
+      const windowStyleSelect = document.getElementById("windowStyle");
+      const toolbarToggleWrapper = document.getElementById(
+        "toolbar-toggle-wrapper",
+      );
+      const showToolbarCheckbox = document.getElementById("showToolbar");
+
+      injectCSSCheckbox.addEventListener("change", () => {
+        cssBlock.classList.toggle("active", injectCSSCheckbox.checked);
+        updateCLIPreview();
+      });
+
+      injectJSCheckbox.addEventListener("change", () => {
+        jsBlock.classList.toggle("active", injectJSCheckbox.checked);
+        updateCLIPreview();
+      });
+
+      windowStyleSelect.addEventListener("change", () => {
+        if (windowStyleSelect.value === "frameless") {
+          toolbarToggleWrapper.style.opacity = "0.35";
+          toolbarToggleWrapper.style.pointerEvents = "none";
+          showToolbarCheckbox.checked = false;
+        } else {
+          toolbarToggleWrapper.style.opacity = "1";
+          toolbarToggleWrapper.style.pointerEvents = "auto";
+        }
+        updateCLIPreview();
+      });
+
+      function updateCLIPreview() {
+        const url = urlInput.value.trim() || "https://github.com";
+        const name = nameInput.value.trim() || "GitHub Client";
+        const style = windowStyleSelect.value;
+        const ua = document.getElementById("userAgent").value.trim();
+
+        let cmd = `pico --url "${url}" --name "${name}"`;
+        if (style !== "normal") cmd += ` --style ${style}`;
+        if (!showToolbarCheckbox.checked && style !== "frameless")
+          cmd += ` --no-toolbar`;
+        if (document.getElementById("systemTray").checked) cmd += ` --tray`;
+        if (document.getElementById("alwaysOnTop").checked)
+          cmd += ` --always-on-top`;
+        if (document.getElementById("darkMode").checked) cmd += ` --dark`;
+        if (document.getElementById("blockAds").checked) cmd += ` --block-ads`;
+        if (injectCSSCheckbox.checked) cmd += ` --inject-css`;
+        if (injectJSCheckbox.checked) cmd += ` --inject-js`;
+        if (ua) cmd += ` --user-agent "${ua}"`;
+        const platforms = Array.from(
+          form.querySelectorAll('input[name="platforms"]:checked'),
+        ).map((input) => input.value);
+        if (
+          platforms.length &&
+          !(platforms.length === 1 && platforms[0] === "linux")
+        ) {
+          cmd += ` --platforms ${platforms.join(",")}`;
+        }
+
+        cliPreview.textContent = cmd;
       }
-    });
 
-    document.getElementById('restart-btn').addEventListener('click', () => {
-      form.reset();
-      urlStatus.className = 'status-dot';
-      statusMsg.textContent = 'System: Idle';
-      switchActiveView('form-view');
-      updateCLIPreview();
-    });
+      form.addEventListener("input", updateCLIPreview);
+      windowStyleSelect.addEventListener("change", updateCLIPreview);
 
-    document.getElementById('copy-cli-btn').addEventListener('click', () => {
-      navigator.clipboard.writeText(cliPreview.textContent);
-      const oldText = document.getElementById('copy-cli-btn').textContent;
-      document.getElementById('copy-cli-btn').textContent = 'Copied!';
-      setTimeout(() => {
-        document.getElementById('copy-cli-btn').textContent = oldText;
-      }, 1000);
-    });
+      let validateTimeout = null;
+      urlInput.addEventListener("input", () => {
+        clearTimeout(validateTimeout);
+        const val = urlInput.value.trim();
+        if (!val) {
+          urlStatus.className = "status-dot";
+          return;
+        }
 
-    document.getElementById('copy-logs-btn').addEventListener('click', () => {
-      const logs = Array.from(logsConsole.querySelectorAll('.terminal-line'))
-        .map(l => l.textContent)
-        .join('\n');
-      navigator.clipboard.writeText(logs);
-      alert('Compiler logs copied to clipboard.');
-    });
-  </script>
-</body>
+        validateTimeout = setTimeout(async () => {
+          let cleanUrl = val;
+          if (
+            !cleanUrl.startsWith("http://") &&
+            !cleanUrl.startsWith("https://")
+          ) {
+            cleanUrl = "https://" + cleanUrl;
+          }
+
+          urlStatus.className = "status-dot loading";
+          const alive = await window.picoAPI.validateUrl(cleanUrl);
+
+          if (alive) {
+            urlStatus.className = "status-dot success";
+            if (!nameInput.value.trim()) {
+              try {
+                const urlObj = new URL(cleanUrl);
+                let parts = urlObj.hostname.split(".");
+                if (parts.length > 2 && parts[0] === "www") parts.shift();
+                nameInput.value =
+                  parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+                updateCLIPreview();
+              } catch (err) {}
+            }
+          } else {
+            urlStatus.className = "status-dot error";
+          }
+        }, 500);
+      });
+
+      function switchActiveView(viewId) {
+        document
+          .querySelectorAll(".view-panel")
+          .forEach((v) => v.classList.remove("active"));
+        document.getElementById(viewId).classList.add("active");
+      }
+
+      const logsConsole = document.getElementById("terminal-logs");
+      let logUnsubscribe = null;
+      let buildStatusUnsubscribe = null;
+      let generatedPlatforms = [];
+      const apkBuildStatus = document.getElementById("apk-build-status");
+      const apkBuildState = document.getElementById("apk-build-state");
+      const apkBuildMessage = document.getElementById("apk-build-message");
+      const apkArtifactPath = document.getElementById("apk-artifact-path");
+      const terminalTitle = document.getElementById("terminal-title");
+      const buildSpinner = document.getElementById("build-spinner");
+
+      function resetApkBuildStatus(showStatus) {
+        apkBuildStatus.hidden = !showStatus;
+        apkBuildState.textContent = "Waiting";
+        apkBuildState.className = "apk-build-state";
+        apkBuildMessage.textContent = "The APK build has not started yet.";
+        apkArtifactPath.hidden = true;
+        apkArtifactPath.textContent = "";
+        document.querySelectorAll(".apk-stage-list li").forEach((stage) => {
+          stage.className = "";
+        });
+        terminalTitle.textContent = showStatus
+          ? "APK Build Output"
+          : "Build Compiler Output";
+        buildSpinner.hidden = false;
+      }
+
+      function updateApkBuildStatus(status) {
+        if (!status || !apkBuildStatus || apkBuildStatus.hidden) return;
+
+        const stateLabels = {
+          running: "Running",
+          complete: "Complete",
+          failed: "Failed",
+        };
+        const currentStage = document.querySelector(
+          `.apk-stage-list li[data-stage="${status.stage}"]`,
+        );
+        if (currentStage) currentStage.className = status.state;
+
+        apkBuildState.textContent = stateLabels[status.state] || "Waiting";
+        apkBuildState.className = `apk-build-state ${status.state || ""}`;
+        apkBuildMessage.textContent =
+          status.message || "Waiting for build updates.";
+
+        if (status.artifactPath) {
+          apkArtifactPath.textContent = `APK: ${status.artifactPath}`;
+          apkArtifactPath.hidden = false;
+        }
+        if (status.state === "failed" || status.stage === "complete")
+          buildSpinner.hidden = true;
+      }
+
+      function attachBuildListeners() {
+        if (logUnsubscribe) logUnsubscribe();
+        if (buildStatusUnsubscribe) buildStatusUnsubscribe();
+        logUnsubscribe = window.picoAPI.onLog((text) => logToTerminal(text));
+        buildStatusUnsubscribe =
+          window.picoAPI.onBuildStatus(updateApkBuildStatus);
+      }
+
+      function logToTerminal(text) {
+        const line = document.createElement("div");
+        line.className = "terminal-line";
+
+        let prefix = "  ";
+        if (text.includes("Initializing") || text.includes("Preparing"))
+          prefix = "→ ";
+        else if (text.includes("directory") || text.includes("Directory"))
+          prefix = "  ";
+        else if (
+          text.includes("complete") ||
+          text.includes("complete") ||
+          text.includes("launched")
+        )
+          prefix = "✓ ";
+        else if (text.includes("Installing") || text.includes("installed"))
+          prefix = "↓ ";
+        else if (text.includes("Launching") || text.includes("Starting"))
+          prefix = "▶ ";
+        else if (
+          text.includes("Error") ||
+          text.includes("failed") ||
+          text.includes("Failed")
+        )
+          prefix = "✗ ";
+
+        line.textContent = prefix + text;
+        logsConsole.appendChild(line);
+        logsConsole.scrollTop = logsConsole.scrollHeight;
+      }
+
+      let buildPath = "";
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const platforms = Array.from(formData.getAll("platforms"));
+        if (platforms.length === 0) {
+          alert(
+            "Please choose at least one packaging target (Windows, macOS, Linux, or Android).",
+          );
+          return;
+        }
+
+        const config = {
+          url: urlInput.value.trim(),
+          name: nameInput.value.trim(),
+          outputDir: document.getElementById("outputDir").value.trim(),
+          width: parseInt(document.getElementById("width").value, 10),
+          height: parseInt(document.getElementById("height").value, 10),
+          windowStyle: windowStyleSelect.value,
+          showToolbar: showToolbarCheckbox.checked,
+          systemTray: document.getElementById("systemTray").checked,
+          alwaysOnTop: document.getElementById("alwaysOnTop").checked,
+          darkMode: document.getElementById("darkMode").checked,
+          injectCSS: injectCSSCheckbox.checked,
+          customCSS: document.getElementById("customCSS").value,
+          injectJS: injectJSCheckbox.checked,
+          customJS: document.getElementById("customJS").value,
+          userAgent: document.getElementById("userAgent").value.trim(),
+          blockAds: document.getElementById("blockAds").checked,
+          autoUpdate: document.getElementById("autoUpdate").checked,
+          rememberSize: document.getElementById("rememberSize").checked,
+          platforms: platforms,
+        };
+
+        logsConsole.innerHTML = "";
+        statusMsg.textContent = "System: Working...";
+        generatedPlatforms = platforms;
+        resetApkBuildStatus(false);
+        switchActiveView("progress-view");
+
+        attachBuildListeners();
+
+        const result = await window.picoAPI.generateApp(config);
+
+        if (result.success) {
+          buildPath = result.dir;
+          document.getElementById("dist-path").textContent = result.dir;
+          statusMsg.textContent = "System: Complete";
+          setTimeout(() => {
+            switchActiveView("success-view");
+          }, 1200);
+        } else {
+          alert(`Compilation failed: ${result.error}`);
+          statusMsg.textContent = "System: Idle";
+          switchActiveView("form-view");
+        }
+      });
+
+      document
+        .getElementById("open-folder-btn")
+        .addEventListener("click", () => {
+          if (buildPath) window.picoAPI.openFolder(buildPath);
+        });
+
+      document.getElementById("run-app-btn").addEventListener("click", () => {
+        if (buildPath) window.picoAPI.runApp(buildPath);
+      });
+
+      document
+        .getElementById("build-installer-btn")
+        .addEventListener("click", () => {
+          if (buildPath) {
+            logsConsole.innerHTML = "";
+            statusMsg.textContent = "System: Packaging...";
+            resetApkBuildStatus(generatedPlatforms.includes("android"));
+            switchActiveView("progress-view");
+            attachBuildListeners();
+            window.picoAPI
+              .buildApp(buildPath)
+              .then((result) => {
+                statusMsg.textContent = result.success
+                  ? "System: Complete"
+                  : "System: Build failed";
+              })
+              .catch((error) => {
+                statusMsg.textContent = "System: Build failed";
+                logToTerminal(`Build error: ${error.message}`);
+                updateApkBuildStatus({
+                  stage: "complete",
+                  state: "failed",
+                  message: error.message,
+                });
+              });
+          }
+        });
+
+      document.getElementById("restart-btn").addEventListener("click", () => {
+        form.reset();
+        urlStatus.className = "status-dot";
+        statusMsg.textContent = "System: Idle";
+        switchActiveView("form-view");
+        updateCLIPreview();
+      });
+
+      document.getElementById("copy-cli-btn").addEventListener("click", () => {
+        navigator.clipboard.writeText(cliPreview.textContent);
+        const oldText = document.getElementById("copy-cli-btn").textContent;
+        document.getElementById("copy-cli-btn").textContent = "Copied!";
+        setTimeout(() => {
+          document.getElementById("copy-cli-btn").textContent = oldText;
+        }, 1000);
+      });
+
+      document.getElementById("copy-logs-btn").addEventListener("click", () => {
+        const logs = Array.from(logsConsole.querySelectorAll(".terminal-line"))
+          .map((l) => l.textContent)
+          .join("\n");
+        navigator.clipboard.writeText(logs);
+        alert("Compiler logs copied to clipboard.");
+      });
+    </script>
+  </body>
 </html>

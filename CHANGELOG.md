@@ -1,8 +1,23 @@
 # Changelog
 
+## [1.5.0] — 2026-08-18
+
+### Added
+
+- Visible real-time Android APK stage indicators in the desktop interface for dependencies, native project preparation, asset sync, Gradle compilation, and the final artifact.
+- Structured IPC build-status events and APK artifact-path feedback alongside the existing compiler log stream.
+- GUI regression coverage that verifies the real-time APK status bridge and display contract.
+
+### Changed
+
+- The GUI build pipeline now awaits every stage and reports a clear success or failure result to the interface.
+
+---
+
 ## [1.4.1] — 2026-08-18
 
 ### Fixed
+
 - Rejected non-web URLs, incomplete project settings, and invalid window dimensions before generation can write a malformed project.
 - Reported missing CLI option values and malformed shortcut JSON instead of failing with an unhelpful runtime error.
 - Prevented the desktop GUI from attempting to launch Electron for Android-only projects.
@@ -15,11 +30,13 @@
 ## [1.4.0] — 2026-08-18
 
 ### Added
+
 - Android target generation through Capacitor, including website launcher assets, native configuration, and APK build scripts.
 - Android options in the interactive CLI and desktop GUI.
 - Android-specific generation tests and a generated-project build guide.
 
 ### Changed
+
 - Generated project metadata now rejects unsupported platform targets before writing output files.
 
 ---
@@ -27,11 +44,13 @@
 ## [1.3.0] — 2026-08-18
 
 ### Changed
+
 - Updated the CLI and generated application toolchains to Electron 43 and Electron Builder 26.
 - Updated the interactive CLI dependencies to Inquirer 14, Chalk 6, and the current fs-extra 11 release.
 - Declared Node.js 22 as the supported runtime for Pico and generated applications.
 
 ### Fixed
+
 - Restored the generated app toolbar navigation bridge by aligning its IPC event channel.
 - Corrected the GUI favicon request payload so site icons can be retrieved from the desktop dashboard.
 
@@ -40,12 +59,14 @@
 ## [1.2.0] — 2026-06-25
 
 ### Added
+
 - GUI: Electron-based config dashboard (`npm run gui`)
 - Run App Launcher button — spawns generated app directly from GUI
 - Real-time build log output in GUI terminal panel
 - CLI preview pane — shows equivalent CLI command as you configure
 
 ### Fixed
+
 - App launcher was using `exec('npm start')` which silently failed on some setups; now resolves the actual electron binary from the generated app's `node_modules`
 - URL validation no longer blocks submission when site is unreachable
 
@@ -54,6 +75,7 @@
 ## [1.1.0] — 2026-06-14
 
 ### Added
+
 - Dark mode injection via CSS `filter: invert` + hue-rotate
 - Ad/tracker domain blocking via Electron `webRequest` intercept
 - Custom CSS injection at page load
@@ -62,6 +84,7 @@
 - Window size and position persistence
 
 ### Fixed
+
 - Window position restored off-screen on single-monitor setups after disconnecting external display
 - New-window events were spawning extra Electron windows instead of opening in browser
 
@@ -70,6 +93,7 @@
 ## [1.0.0] — 2026-06-14
 
 ### Added
+
 - CLI with interactive prompts
 - Electron webview shell with navigation toolbar
 - Frameless window mode
