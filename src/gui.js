@@ -1,6 +1,6 @@
 "use strict";
 
-const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
 const path = require("path");
 const fs = require("fs-extra");
 const { spawn } = require("child_process");
@@ -76,6 +76,42 @@ ipcMain.handle("generate-app", async (event, config) => {
 
 ipcMain.handle("open-folder", async (event, dir) => {
   await shell.openPath(dir);
+});
+
+ipcMain.handle("download-apk", async (event, artifactPath) => {
+  const sourcePath = path.resolve(String(artifactPath || ""));
+  if (path.extname(sourcePath).toLowerCase() !== ".apk") {
+    return { success: false, error: "Only APK artifacts can be downloaded." };
+  }
+  if (!(await fs.pathExists(sourcePath))) {
+    return { success: false, error: "The generated APK could not be found." };
+  }
+
+  const defaultPath = path.join(
+    app.getPath("downloads"),
+    path.basename(sourcePath),
+  );
+  const automatedPath = process.env.PICO_AUTOMATED_DOWNLOAD_PATH;
+  const selection = automatedPath
+    ? { canceled: false, filePath: path.resolve(automatedPath) }
+    : await dialog.showSaveDialog(mainWindow, {
+        title: "Download generated APK",
+        defaultPath,
+        buttonLabel: "Save APK",
+        filters: [{ name: "Android packages", extensions: ["apk"] }],
+      });
+
+  if (selection.canceled || !selection.filePath) {
+    return { success: false, canceled: true };
+  }
+
+  const destinationPath = selection.filePath.toLowerCase().endsWith(".apk")
+    ? selection.filePath
+    : `${selection.filePath}.apk`;
+  await fs.ensureDir(path.dirname(destinationPath));
+  await fs.copy(sourcePath, destinationPath, { overwrite: true });
+
+  return { success: true, path: destinationPath };
 });
 
 ipcMain.handle("run-app", (event, dir) => {

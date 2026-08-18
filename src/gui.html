@@ -23,7 +23,7 @@
           </div>
           <div class="brand-title">
             <h2>pico-chan</h2>
-            <span class="version-tag">v1.5.0</span>
+            <span class="version-tag">v1.5.1</span>
           </div>
         </div>
 
@@ -470,6 +470,15 @@
               </li>
             </ol>
             <div id="apk-artifact-path" class="apk-artifact-path" hidden></div>
+            <button
+              id="download-apk-btn"
+              class="download-apk-btn"
+              type="button"
+              hidden
+              disabled
+            >
+              Download Debug APK
+            </button>
           </div>
           <div class="dev-terminal">
             <div class="terminal-bar">
@@ -687,8 +696,10 @@
       const apkBuildState = document.getElementById("apk-build-state");
       const apkBuildMessage = document.getElementById("apk-build-message");
       const apkArtifactPath = document.getElementById("apk-artifact-path");
+      const downloadApkButton = document.getElementById("download-apk-btn");
       const terminalTitle = document.getElementById("terminal-title");
       const buildSpinner = document.getElementById("build-spinner");
+      let apkArtifactSource = "";
 
       function resetApkBuildStatus(showStatus) {
         apkBuildStatus.hidden = !showStatus;
@@ -697,6 +708,10 @@
         apkBuildMessage.textContent = "The APK build has not started yet.";
         apkArtifactPath.hidden = true;
         apkArtifactPath.textContent = "";
+        apkArtifactSource = "";
+        downloadApkButton.hidden = true;
+        downloadApkButton.disabled = true;
+        downloadApkButton.textContent = "Download Debug APK";
         document.querySelectorAll(".apk-stage-list li").forEach((stage) => {
           stage.className = "";
         });
@@ -725,8 +740,11 @@
           status.message || "Waiting for build updates.";
 
         if (status.artifactPath) {
+          apkArtifactSource = status.artifactPath;
           apkArtifactPath.textContent = `APK: ${status.artifactPath}`;
           apkArtifactPath.hidden = false;
+          downloadApkButton.hidden = false;
+          downloadApkButton.disabled = false;
         }
         if (status.state === "failed" || status.stage === "complete")
           buildSpinner.hidden = true;
@@ -838,6 +856,28 @@
 
       document.getElementById("run-app-btn").addEventListener("click", () => {
         if (buildPath) window.picoAPI.runApp(buildPath);
+      });
+
+      downloadApkButton.addEventListener("click", async () => {
+        if (!apkArtifactSource) return;
+
+        downloadApkButton.disabled = true;
+        downloadApkButton.textContent = "Saving APK…";
+        const result = await window.picoAPI.downloadApk(apkArtifactSource);
+
+        if (result.success) {
+          apkArtifactPath.textContent = `Saved APK: ${result.path}`;
+          apkBuildMessage.textContent = "APK download completed successfully.";
+          downloadApkButton.textContent = "APK Saved";
+        } else if (result.canceled) {
+          downloadApkButton.disabled = false;
+          downloadApkButton.textContent = "Download Debug APK";
+          apkBuildMessage.textContent = "APK download was canceled.";
+        } else {
+          downloadApkButton.disabled = false;
+          downloadApkButton.textContent = "Retry APK Download";
+          apkBuildMessage.textContent = result.error || "APK download failed.";
+        }
       });
 
       document

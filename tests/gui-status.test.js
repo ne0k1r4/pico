@@ -12,10 +12,14 @@ test("GUI exposes structured real-time APK build status", () => {
   const page = source("gui.html");
 
   assert.match(preload, /onBuildStatus/);
+  assert.match(preload, /downloadApk/);
   assert.match(main, /build-status/);
+  assert.match(main, /download-apk/);
+  assert.match(main, /showSaveDialog/);
   assert.match(main, /artifactPath/);
   assert.match(main, /assembleDebug/);
   assert.match(page, /id="apk-build-status"/);
   assert.match(page, /data-stage="gradle"/);
   assert.match(page, /id="apk-artifact-path"/);
+  assert.match(page, /id="download-apk-btn"/);
 });

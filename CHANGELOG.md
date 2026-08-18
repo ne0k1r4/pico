@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.1] — 2026-08-18
+
+### Added
+
+- A **Download Debug APK** action that appears only after the graphical build pipeline verifies `app-debug.apk`.
+- A user-selected Save As flow for APK artifacts, with cancellation, retry, and completed-download feedback in the status panel.
+- A visible Electron end-to-end workflow that generates an Android project, builds its APK, downloads it through the interface, and verifies the saved artifact.
+
+---
+
 ## [1.5.0] — 2026-08-18
 
 ### Added

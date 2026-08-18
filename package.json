@@ -1,6 +1,6 @@
 {
   "name": "pico",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Turn any website into a native desktop app",
   "main": "src/cli.js",
   "engines": {

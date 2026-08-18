@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld("picoAPI", {
   openFolder: (dir) => ipcRenderer.invoke("open-folder", dir),
   runApp: (dir) => ipcRenderer.invoke("run-app", dir),
   buildApp: (dir) => ipcRenderer.invoke("build-app", dir),
+  downloadApk: (artifactPath) =>
+    ipcRenderer.invoke("download-apk", artifactPath),
   onLog: (callback) => {
     const subscription = (event, text) => callback(text);
     ipcRenderer.on("log", subscription);
