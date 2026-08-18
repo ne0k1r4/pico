@@ -1,5 +1,7 @@
 # Android APK Capability
 
+- [x] Add CI status badges and an Android worker deployment manifest, then publish the update.
+
 - [x] Update the README for Pico 1.4.1, Android APK generation, and build-worker deployment.
 
 - [x] Generate, build, and validate a debug APK for sujalinfo.in.

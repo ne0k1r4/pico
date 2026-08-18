@@ -1,0 +1,24 @@
+name: Pico CI
+
+on:
+  push:
+    paths-ignore:
+      - "services/build-workers/**"
+  pull_request:
+    paths-ignore:
+      - "services/build-workers/**"
+
+permissions:
+  contents: read
+
+jobs:
+  generator-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm test
