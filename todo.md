@@ -1,6 +1,6 @@
 # Android APK Capability
 
-- [ ] Create and deliver the final Git-history ZIP from the enhanced Pico v1.5.0 repository.
+- [x] Create and deliver the final Git-history ZIP from the enhanced Pico v1.5.0 repository.
 
 - [x] Synchronize from GitHub and use the merged Pico v1.4.1 repository as the baseline.
 
