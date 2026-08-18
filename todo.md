@@ -1,5 +1,7 @@
 # Android APK Capability
 
+- [x] Update the README for Pico 1.4.1, Android APK generation, and build-worker deployment.
+
 - [x] Generate, build, and validate a debug APK for sujalinfo.in.
 
 - [x] Reproduce and correct current generator, CLI, and GUI defects.
