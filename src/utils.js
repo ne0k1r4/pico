@@ -1,0 +1,105 @@
+const fs   = require('fs-extra')
+const path = require('path')
+const https = require('https')
+const http  = require('http')
+const { URL } = require('url')
+
+async function validateUrl(rawUrl) {
+  try {
+    const u = new URL(rawUrl)
+    return await new Promise(resolve => {
+      const lib = u.protocol === 'https:' ? https : http
+      const options = {
+        method: 'HEAD',
+        hostname: u.hostname,
+        port: u.port || (u.protocol === 'https:' ? 443 : 80),
+        path: u.pathname || '/',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        timeout: 6000
+      }
+      const req = lib.request(options, res => resolve(res.statusCode < 600))
+      req.on('error',   () => resolve(false))
+      req.on('timeout', () => { req.destroy(); resolve(false) })
+      req.end()
+    })
+  } catch {
+    return false
+  }
+}
+
+async function fetchFavicon(siteUrl, outputDir, appName) {
+  let base
+  try {
+    base = new URL(siteUrl)
+  } catch {
+    return null
+  }
+
+  const candidates = [
+    `${base.origin}/apple-touch-icon.png`,
+    `${base.origin}/apple-touch-icon-precomposed.png`,
+    `${base.origin}/favicon.png`,
+    `${base.origin}/favicon.ico`,
+    `https://www.google.com/s2/favicons?domain=${base.hostname}&sz=256`
+  ]
+
+  const cacheDir  = path.join(outputDir, '.favicon-cache')
+  const slug      = appName.trim().toLowerCase().replace(/\s+/g, '-')
+  const savePath  = path.join(cacheDir, `${slug}.png`)
+
+  await fs.ensureDir(cacheDir)
+
+  for (const url of candidates) {
+    const ok = await tryDownload(url, savePath)
+    if (ok) return savePath
+  }
+
+  return null
+}
+
+function tryDownload(url, dest) {
+  return new Promise(resolve => {
+    const lib = url.startsWith('https') ? https : http
+
+    const req = lib.get(url, {
+      timeout: 5000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    }, res => {
+      if (res.statusCode === 301 || res.statusCode === 302) {
+        const loc = res.headers.location
+        if (loc) {
+          const resolvedUrl = new URL(loc, url).toString()
+          return resolve(tryDownload(resolvedUrl, dest).catch(() => false))
+        }
+        return resolve(false)
+      }
+
+      if (res.statusCode !== 200) return resolve(false)
+
+      const ct = res.headers['content-type'] || ''
+      const isImage = ct.includes('image') || ct.includes('octet-stream') || url.endsWith('.ico') || url.endsWith('.png')
+      if (!isImage) return resolve(false)
+
+      const out = fs.createWriteStream(dest)
+      res.pipe(out)
+      out.on('finish', () => resolve(true))
+      out.on('error',  () => resolve(false))
+    })
+
+    req.on('error',   () => resolve(false))
+    req.on('timeout', () => { req.destroy(); resolve(false) })
+  })
+}
+
+function validateProxyUrl(proxyStr) {
+  if (!proxyStr || typeof proxyStr !== 'string') return false
+  const trimmed = proxyStr.trim()
+  if (!trimmed) return false
+  return /^(http|https|socks4|socks5):\/\/[^\s]+$/.test(trimmed) || /^[a-zA-Z0-9.-]+:\d+$/.test(trimmed)
+}
+
+module.exports = { validateUrl, fetchFavicon, validateProxyUrl }

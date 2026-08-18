@@ -1,0 +1,40 @@
+[package]
+name = "tauri-app-generator"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-commercial"
+rust-version = "1.78"
+
+[lib]
+name = "tauri_app_generator"
+path = "src/lib.rs"
+
+[[bin]]
+name = "tauri-app-generator"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0.86"
+base64 = "0.22.1"
+clap = { version = "4.5.7", features = ["derive", "env"] }
+hex = "0.4.3"
+image = { version = "0.25.1", default-features = false, features = ["ico", "png"] }
+regex = "1.10.5"
+serde = { version = "1.0.203", features = ["derive"] }
+serde_json = "1.0.117"
+sha2 = "0.10.8"
+thiserror = "1.0.61"
+time = { version = "0.3.36", features = ["formatting"] }
+url = "2.5.1"
+
+[dev-dependencies]
+assert_cmd = "2.0.14"
+tempfile = "3.10.1"
+walkdir = "2.5.0"
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+opt-level = "z"
+panic = "abort"
+strip = true
