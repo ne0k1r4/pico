@@ -76,10 +76,10 @@ async function processJob(
     }
 
     await job.updateProgress({ phase: "collecting-artifacts" });
-    const artifactPaths = await findArtifacts(
-      path.join(sourceDir, "src-tauri", "target"),
-      artifactExtensions(payload.platform)
-    );
+    const artifactRoot = payload.platform === "android"
+      ? path.join(sourceDir, "android", "app", "build", "outputs")
+      : path.join(sourceDir, "src-tauri", "target");
+    const artifactPaths = await findArtifacts(artifactRoot, artifactExtensions(payload.platform));
     if (artifactPaths.length === 0) {
       throw new Error("build completed without producing expected artifacts");
     }

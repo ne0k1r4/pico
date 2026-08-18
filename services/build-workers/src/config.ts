@@ -3,7 +3,7 @@ import type { BuildPlatform } from "./types";
 
 const EnvSchema = z.object({
   NODE_ENV: z.string().default("production"),
-  WORKER_PLATFORM: z.enum(["windows", "macos", "linux"]),
+  WORKER_PLATFORM: z.enum(["windows", "macos", "linux", "android"]),
   REDIS_URL: z.string().url(),
   QUEUE_NAME: z.string().default("pico-builds"),
   WORKER_CONCURRENCY: z.coerce.number().int().positive().max(4).default(1),

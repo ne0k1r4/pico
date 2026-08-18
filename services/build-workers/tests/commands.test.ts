@@ -15,4 +15,13 @@ describe("platform command planning", () => {
     expect(commands[2]?.args).toContain("x86_64-pc-windows-msvc");
     expect(commands[2]?.args).toContain("nsis,msi");
   });
+
+  test("uses the Capacitor APK build path for Android", () => {
+    expect(platformBundles("android")).toEqual(["apk"]);
+    expect(artifactExtensions("android")).toEqual([".apk"]);
+    expect(buildCommands("android", "aarch64")).toEqual([
+      { command: "npm", args: ["install", "--ignore-scripts"] },
+      { command: "npm", args: ["run", "android:apk:debug"] }
+    ]);
+  });
 });

@@ -30,10 +30,10 @@ const AD_DOMAINS = [
 const FALLBACK_PALETTE = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444']
 
 async function generateApp(config) {
-  const platforms = normalizePlatforms(config.platforms)
-  const resolvedConfig = { ...config, platforms }
+  const resolvedConfig = normalizeConfig(config)
+  const { platforms } = resolvedConfig
   const slug = slugify(resolvedConfig.name)
-  const outDir = path.resolve(config.outputDir, slug)
+  const outDir = path.resolve(resolvedConfig.outputDir, slug)
 
   await fs.ensureDir(outDir)
   if (platforms.some(platform => DESKTOP_PLATFORMS.has(platform))) {
@@ -160,8 +160,8 @@ function buildPackageJson(slug, config) {
   if (hasAndroidTarget) {
     pkg.scripts = {
       ...pkg.scripts,
-      'android:add': 'cap add android',
-      'android:sync': 'cap sync android',
+      'android:add': 'node scripts/ensure-android.mjs',
+      'android:sync': 'npm run android:add && cap sync android',
       'android:apk:debug': 'npm run android:sync && cd android && ./gradlew assembleDebug',
       'android:apk': 'npm run android:sync && cap build android --androidreleasetype APK'
     }
@@ -212,12 +212,28 @@ async function writeAndroidProjectFiles(outDir, slug, config) {
 `
 
   const androidReadme = `# Android APK build\n\nThis Pico project uses Capacitor to package ${config.url} in an Android WebView.\n\n## Build a debug APK\n\n1. Install Node.js 22+, Android Studio, and the Android SDK.\n2. Run \`npm install\`.\n3. Run \`npm run android:add\` once to create the native Android project.\n4. Run \`npm run android:apk:debug\`.\n\nThe debug APK is created at \`android/app/build/outputs/apk/debug/app-debug.apk\`. For a signed release APK, configure a keystore and run \`npm run android:apk\`.\n\nDesktop-only features such as the Electron toolbar, system tray, request blocking, and renderer injection are not applied to the Android WebView.\n`
+  const ensureAndroidScript = `import { existsSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import path from 'node:path'
+
+const androidDirectory = path.resolve('android')
+
+if (existsSync(androidDirectory)) {
+  console.log('Android project already exists; reusing it.')
+  process.exit(0)
+}
+
+const command = process.platform === 'win32' ? 'npx.cmd' : 'npx'
+const result = spawnSync(command, ['cap', 'add', 'android'], { stdio: 'inherit' })
+process.exit(result.status ?? 1)
+`
 
   await fs.ensureDir(webDir)
   await Promise.all([
     fs.writeJson(path.join(outDir, 'capacitor.config.json'), androidConfig, { spaces: 2 }),
     fs.writeFile(path.join(webDir, 'index.html'), launcherHtml),
-    fs.writeFile(path.join(outDir, 'ANDROID.md'), androidReadme)
+    fs.writeFile(path.join(outDir, 'ANDROID.md'), androidReadme),
+    fs.outputFile(path.join(outDir, 'scripts', 'ensure-android.mjs'), ensureAndroidScript)
   ])
 }
 
@@ -230,12 +246,66 @@ function getAndroidAllowedHosts(url) {
 }
 
 function buildAndroidAppId(slug) {
-  return `io.pico.${slug.replace(/-/g, '') || 'app'}`
+  // Android requires every application-ID segment to start with a letter.
+  return `io.pico.app${slug.replace(/-/g, '') || 'app'}`
+}
+
+function normalizeConfig(config) {
+  if (!config || typeof config !== 'object') {
+    throw new Error('App configuration is required')
+  }
+
+  const name = String(config.name || '').trim()
+  if (!name) {
+    throw new Error('App name is required')
+  }
+
+  const outputDir = String(config.outputDir || '').trim()
+  if (!outputDir) {
+    throw new Error('Output directory is required')
+  }
+
+  const url = normalizeWebsiteUrl(config.url)
+  const platforms = normalizePlatforms(config.platforms)
+  const width = normalizeDimension(config.width, 1280, 'Window width')
+  const height = normalizeDimension(config.height, 800, 'Window height')
+
+  return { ...config, name, outputDir, url, platforms, width, height }
+}
+
+function normalizeWebsiteUrl(value) {
+  let parsed
+  try {
+    parsed = new URL(String(value || '').trim())
+  } catch {
+    throw new Error('Website URL must be a valid HTTP or HTTPS address')
+  }
+
+  if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) {
+    throw new Error('Website URL must use HTTP or HTTPS')
+  }
+
+  return parsed.toString()
+}
+
+function normalizeDimension(value, fallback, label) {
+  if (value == null || value === '') return fallback
+  const dimension = Number(value)
+  if (!Number.isInteger(dimension) || dimension < 1) {
+    throw new Error(`${label} must be a positive whole number`)
+  }
+  return dimension
 }
 
 function normalizePlatforms(platforms) {
-  const requested = Array.isArray(platforms) ? platforms : ['linux']
-  const uniquePlatforms = [...new Set(requested)]
+  const requested = platforms == null ? ['linux'] : platforms
+  if (!Array.isArray(requested)) {
+    throw new Error('Platform targets must be provided as a list')
+  }
+
+  const uniquePlatforms = [...new Set(requested
+    .map(platform => String(platform).trim().toLowerCase())
+    .filter(Boolean))]
   const unsupported = uniquePlatforms.filter(platform => !SUPPORTED_PLATFORMS.has(platform))
 
   if (unsupported.length) {

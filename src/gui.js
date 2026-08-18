@@ -89,6 +89,19 @@ ipcMain.handle('run-app', (event, dir) => {
 
   const hasNodeModules = fs.existsSync(path.join(dir, 'node_modules'))
 
+  let platforms = []
+  try {
+    platforms = JSON.parse(fs.readFileSync(path.join(dir, 'app-config.json'), 'utf8')).platforms || []
+  } catch {
+    sendLog('Could not read project target settings.')
+    return
+  }
+
+  if (!platforms.some(platform => ['win', 'mac', 'linux'].includes(platform))) {
+    sendLog('Android projects run through an Android emulator or device. Use Compile Native Installer to create the APK.')
+    return
+  }
+
   function launchApp() {
     sendLog('Launching app...')
 

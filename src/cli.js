@@ -22,7 +22,7 @@ async function loadCliDependencies() {
 function fixUrl(raw) {
   let u = (raw || '').trim()
   if (!u) return u
-  if (!u.startsWith('http://') && !u.startsWith('https://')) u = 'https://' + u
+  if (!/^[a-z][a-z\d+.-]*:\/\//i.test(u)) u = 'https://' + u
   return u
 }
 
@@ -42,6 +42,7 @@ async function askQuestions() {
       filter: fixUrl,
       validate: async val => {
         if (!val) return 'required'
+        if (!isWebUrl(val)) return 'enter a valid HTTP or HTTPS URL'
         const alive = await validateUrl(val).catch(() => false)
         if (!alive) {
           console.log(chalk.yellow('\n  ⚠ could not reach that url — continuing anyway'))
@@ -206,16 +207,28 @@ const DEFAULTS = {
 
 function parseArgs(args) {
   const options = {}
+  const nextValue = (flag, index) => {
+    const value = args[index + 1]
+    if (!value || value.startsWith('--')) {
+      throw new Error(`${flag} requires a value`)
+    }
+    return value
+  }
+
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
     if (arg === '--url') {
-      options.url = fixUrl(args[++i])
+      options.url = fixUrl(nextValue(arg, i))
+      i += 1
     } else if (arg === '--name') {
-      options.name = args[++i]
+      options.name = nextValue(arg, i)
+      i += 1
     } else if (arg === '--output' || arg === '--outputDir') {
-      options.outputDir = args[++i]
+      options.outputDir = nextValue(arg, i)
+      i += 1
     } else if (arg === '--style') {
-      options.windowStyle = args[++i]
+      options.windowStyle = nextValue(arg, i)
+      i += 1
     } else if (arg === '--no-toolbar') {
       options.showToolbar = false
     } else if (arg === '--tray') {
@@ -227,38 +240,57 @@ function parseArgs(args) {
     } else if (arg === '--inject-css') {
       options.injectCSS = true
     } else if (arg === '--css') {
-      options.customCSS = args[++i]
+      options.customCSS = nextValue(arg, i)
+      i += 1
       options.injectCSS = true
     } else if (arg === '--inject-js') {
       options.injectJS = true
     } else if (arg === '--js') {
-      options.customJS = args[++i]
+      options.customJS = nextValue(arg, i)
+      i += 1
       options.injectJS = true
     } else if (arg === '--user-agent') {
-      options.userAgent = args[++i]
+      options.userAgent = nextValue(arg, i)
+      i += 1
     } else if (arg === '--protocol') {
-      options.protocol = args[++i]
+      options.protocol = nextValue(arg, i)
+      i += 1
     } else if (arg === '--shortcuts') {
-      try { options.shortcuts = JSON.parse(args[++i]) } catch {}
+      const shortcuts = nextValue(arg, i)
+      i += 1
+      try { options.shortcuts = JSON.parse(shortcuts) } catch { throw new Error('--shortcuts must be valid JSON') }
     } else if (arg === '--proxy') {
-      options.proxy = args[++i]
+      options.proxy = nextValue(arg, i)
+      i += 1
     } else if (arg === '--block-ads') {
       options.blockAds = true
     } else if (arg === '--width') {
-      options.width = parseInt(args[++i], 10)
+      options.width = Number(nextValue(arg, i))
+      i += 1
     } else if (arg === '--height') {
-      options.height = parseInt(args[++i], 10)
+      options.height = Number(nextValue(arg, i))
+      i += 1
     } else if (arg === '--no-remember') {
       options.rememberSize = false
     } else if (arg === '--no-icon') {
       options.fetchIcon = false
     } else if (arg === '--platforms') {
-      options.platforms = args[++i].split(',')
+      options.platforms = nextValue(arg, i).split(',')
+      i += 1
     } else if (arg === '--build') {
       options.build = true
     }
   }
   return options
+}
+
+function isWebUrl(value) {
+  try {
+    const parsed = new URL(value)
+    return ['http:', 'https:'].includes(parsed.protocol) && Boolean(parsed.hostname)
+  } catch {
+    return false
+  }
 }
 
 async function main() {
@@ -343,9 +375,9 @@ async function main() {
         console.log(chalk.gray('  preparing Android project...'))
         await runCommand('npm', ['run', 'android:add'], result.dir)
       }
-      console.log(chalk.gray('  running electron-builder...'))
+      console.log(chalk.gray('  packaging selected target(s)...'))
       await runCommand('npm', ['run', 'build:this'], result.dir)
-      console.log(chalk.green.bold('\n  compilation complete! installer is in: ' + path.join(result.dir, 'dist')))
+      console.log(chalk.green.bold('\n  compilation complete! Review the generated output folders for the package.'))
     } catch (err) {
       console.error(chalk.red.bold('\n  compilation failed: ') + err.message)
     }

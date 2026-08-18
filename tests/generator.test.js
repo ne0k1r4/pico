@@ -35,7 +35,7 @@ test('generateApp writes a runnable Electron project', async () => {
   const appConfig = JSON.parse(await fs.readFile(path.join(result.dir, 'app-config.json'), 'utf8'))
   assert.deepEqual(appConfig, {
     name: 'Example App',
-    url: 'https://example.com',
+    url: 'https://example.com/',
     width: 1280,
     height: 800,
     windowStyle: 'minimal',
@@ -159,16 +159,34 @@ test('generateApp creates a Capacitor project that can build an Android APK', as
   const launcherHtml = await fs.readFile(path.join(result.dir, 'www', 'index.html'), 'utf8')
 
   assert.deepEqual(appConfig.platforms, ['android'])
-  assert.equal(appConfig.android.appId, 'io.pico.androidcompanion')
+  assert.equal(appConfig.android.appId, 'io.pico.appandroidcompanion')
   assert.equal(packageJson.dependencies['@capacitor/core'], '^8.5.0')
   assert.equal(packageJson.dependencies['@capacitor/android'], '^8.5.0')
   assert.equal(packageJson.devDependencies['@capacitor/cli'], '^8.5.0')
-  assert.equal(packageJson.scripts['android:add'], 'cap add android')
+  assert.equal(packageJson.scripts['android:add'], 'node scripts/ensure-android.mjs')
   assert.match(packageJson.scripts['android:apk:debug'], /assembleDebug/)
-  assert.equal(capacitorConfig.appId, 'io.pico.androidcompanion')
+  assert.equal(capacitorConfig.appId, 'io.pico.appandroidcompanion')
   assert.deepEqual(capacitorConfig.server.allowNavigation, ['app.example.com'])
   assert.match(launcherHtml, /https:\/\/app\.example\.com\/dashboard/)
   await assert.doesNotReject(fs.access(path.join(result.dir, 'ANDROID.md')))
+  await assert.doesNotReject(fs.access(path.join(result.dir, 'scripts', 'ensure-android.mjs')))
+})
+
+test('generateApp rejects invalid website and project input before writing output', async () => {
+  const outputDir = await tempProjectDir()
+
+  await assert.rejects(
+    generateApp({ name: 'Unsafe App', url: 'file:///etc/passwd', outputDir }),
+    /Website URL must use HTTP or HTTPS/
+  )
+  await assert.rejects(
+    generateApp({ name: '', url: 'https://example.com', outputDir }),
+    /App name is required/
+  )
+  await assert.rejects(
+    generateApp({ name: 'Bad Dimensions', url: 'https://example.com', outputDir, width: 1.5 }),
+    /Window width must be a positive whole number/
+  )
 })
 
 test('generateApp configures auto-updater settings', async () => {

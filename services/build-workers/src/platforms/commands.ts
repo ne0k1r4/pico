@@ -13,10 +13,16 @@ export function platformBundles(platform: BuildPlatform): string[] {
       return ["app", "dmg"];
     case "linux":
       return ["appimage", "deb", "rpm"];
+    case "android":
+      return ["apk"];
   }
 }
 
 export function rustTarget(platform: BuildPlatform, architecture: BuildArchitecture): string {
+  if (platform === "android") {
+    throw new Error("Android builds use Capacitor and Gradle instead of a Rust target");
+  }
+
   const targets: Record<BuildPlatform, Record<BuildArchitecture, string>> = {
     windows: {
       x86_64: "x86_64-pc-windows-msvc",
@@ -29,12 +35,24 @@ export function rustTarget(platform: BuildPlatform, architecture: BuildArchitect
     linux: {
       x86_64: "x86_64-unknown-linux-gnu",
       aarch64: "aarch64-unknown-linux-gnu"
+    },
+    android: {
+      x86_64: "",
+      aarch64: ""
     }
   };
   return targets[platform][architecture];
 }
 
 export function buildCommands(platform: BuildPlatform, architecture: BuildArchitecture): BuildCommand[] {
+  if (platform === "android") {
+    // Android sources are Pico-generated Capacitor projects, not Tauri workspaces.
+    return [
+      { command: "npm", args: ["install", "--ignore-scripts"] },
+      { command: "npm", args: ["run", "android:apk:debug"] }
+    ];
+  }
+
   const bundles = platformBundles(platform).join(",");
   const target = rustTarget(platform, architecture);
   return [
@@ -55,5 +73,7 @@ export function artifactExtensions(platform: BuildPlatform): string[] {
       return [".app.tar.gz", ".dmg"];
     case "linux":
       return [".AppImage", ".deb", ".rpm"];
+    case "android":
+      return [".apk"];
   }
 }

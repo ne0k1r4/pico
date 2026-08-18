@@ -1,6 +1,6 @@
 # PICO Build Workers
 
-Queue-based Tauri build workers for Windows, macOS, and Linux.
+Queue-based build workers for Pico desktop and Android projects.
 
 ## Queue Contract
 
@@ -53,3 +53,5 @@ Linux workers run well in Kubernetes with `Dockerfile.linux`.
 Windows workers should run on isolated Windows containers or ephemeral Windows VMs using `Dockerfile.windows`.
 
 macOS workers must run on Apple macOS hosts because Apple licensing and signing/notarization require macOS. Use the GitHub Actions macOS job or a self-hosted macOS runner with the same package entrypoint.
+
+Android workers use `Dockerfile.android` and require the Android SDK. They consume Pico-generated Capacitor projects and upload debug APKs from `android/app/build/outputs/apk/`.

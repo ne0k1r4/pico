@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.1] — 2026-08-18
+
+### Fixed
+- Rejected non-web URLs, incomplete project settings, and invalid window dimensions before generation can write a malformed project.
+- Reported missing CLI option values and malformed shortcut JSON instead of failing with an unhelpful runtime error.
+- Prevented the desktop GUI from attempting to launch Electron for Android-only projects.
+- Corrected Android application IDs so every generated identifier satisfies Android's package-name rules.
+- Made Android project preparation idempotent, so repeated APK builds reuse the existing native project.
+- Completed Android job support in the build worker, including command planning, artifact discovery, content typing, and an Android SDK worker image.
+
+---
+
 ## [1.4.0] — 2026-08-18
 
 ### Added

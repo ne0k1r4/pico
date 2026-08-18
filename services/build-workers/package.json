@@ -8,6 +8,7 @@
     "start:linux": "WORKER_PLATFORM=linux bun src/main.ts",
     "start:windows": "WORKER_PLATFORM=windows bun src/main.ts",
     "start:macos": "WORKER_PLATFORM=macos bun src/main.ts",
+    "start:android": "WORKER_PLATFORM=android bun src/main.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },

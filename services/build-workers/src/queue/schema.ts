@@ -4,7 +4,7 @@ export const BuildJobPayloadSchema = z.object({
   buildId: z.string().uuid(),
   projectId: z.string().uuid(),
   appVersion: z.string().regex(/^\d+\.\d+\.\d+(\.\d+)?$/),
-  platform: z.enum(["windows", "macos", "linux"]),
+  platform: z.enum(["windows", "macos", "linux", "android"]),
   architecture: z.enum(["x86_64", "aarch64"]),
   source: z.object({
     bucket: z.string().min(3),

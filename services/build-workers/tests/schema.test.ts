@@ -35,4 +35,21 @@ describe("BuildJobPayloadSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  test("accepts Android APK build jobs", () => {
+    const result = BuildJobPayloadSchema.safeParse({
+      buildId: "018fdc2a-65f7-7b1b-8ec8-bd77678f9a10",
+      projectId: "018fdc2a-65f7-7b1b-8ec8-bd77678f9a11",
+      appVersion: "1.2.3",
+      platform: "android",
+      architecture: "aarch64",
+      source: {
+        bucket: "pico-sources",
+        key: "projects/example/source.tar.gz",
+        sha256: "a".repeat(64)
+      },
+      artifactPrefix: "projects/example/builds/1"
+    });
+    expect(result.success).toBe(true);
+  });
 });

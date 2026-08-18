@@ -1,4 +1,4 @@
-export type BuildPlatform = "windows" | "macos" | "linux";
+export type BuildPlatform = "windows" | "macos" | "linux" | "android";
 export type BuildArchitecture = "x86_64" | "aarch64";
 
 export interface BuildJobPayload {
