@@ -1,5 +1,7 @@
 # Android APK Capability
 
+- [x] Add custom-keystore release signing and an APK SHA-256 copy action, then validate both GUI build paths.
+
 - [x] Add in-interface APK download after a successful build and verify the full GUI generation, build, download, and inspection flow.
 
 - [x] Create and deliver the final Git-history ZIP from the enhanced Pico v1.5.0 repository.

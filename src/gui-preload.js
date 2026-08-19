@@ -9,7 +9,10 @@ contextBridge.exposeInMainWorld("picoAPI", {
   generateApp: (config) => ipcRenderer.invoke("generate-app", config),
   openFolder: (dir) => ipcRenderer.invoke("open-folder", dir),
   runApp: (dir) => ipcRenderer.invoke("run-app", dir),
-  buildApp: (dir) => ipcRenderer.invoke("build-app", dir),
+  buildApp: (dir, buildOptions) =>
+    ipcRenderer.invoke("build-app", dir, buildOptions),
+  selectKeystore: () => ipcRenderer.invoke("select-keystore"),
+  copyChecksum: (checksum) => ipcRenderer.invoke("copy-checksum", checksum),
   downloadApk: (artifactPath) =>
     ipcRenderer.invoke("download-apk", artifactPath),
   onLog: (callback) => {

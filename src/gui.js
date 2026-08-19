@@ -1,8 +1,16 @@
 "use strict";
 
-const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  clipboard,
+  dialog,
+  ipcMain,
+  shell,
+} = require("electron");
 const path = require("path");
 const fs = require("fs-extra");
+const crypto = require("crypto");
 const { spawn } = require("child_process");
 const { generateApp } = require("./generator");
 const { validateUrl, fetchFavicon } = require("./utils");
@@ -114,6 +122,42 @@ ipcMain.handle("download-apk", async (event, artifactPath) => {
   return { success: true, path: destinationPath };
 });
 
+ipcMain.handle("select-keystore", async () => {
+  const automatedPath = process.env.PICO_AUTOMATED_KEYSTORE_PATH;
+  if (automatedPath && (await fs.pathExists(automatedPath))) {
+    return { success: true, path: path.resolve(automatedPath) };
+  }
+
+  const selection = await dialog.showOpenDialog(mainWindow, {
+    title: "Select Android signing keystore",
+    buttonLabel: "Use keystore",
+    properties: ["openFile"],
+    filters: [
+      {
+        name: "Android keystores",
+        extensions: ["jks", "keystore", "p12", "pfx"],
+      },
+      { name: "All files", extensions: ["*"] },
+    ],
+  });
+
+  if (selection.canceled || !selection.filePaths[0]) {
+    return { success: false, canceled: true };
+  }
+  return { success: true, path: selection.filePaths[0] };
+});
+
+ipcMain.handle("copy-checksum", async (event, checksum) => {
+  const normalizedChecksum = String(checksum || "")
+    .trim()
+    .toLowerCase();
+  if (!/^[a-f0-9]{64}$/.test(normalizedChecksum)) {
+    return { success: false, error: "Only a SHA-256 checksum can be copied." };
+  }
+  clipboard.writeText(normalizedChecksum);
+  return { success: true };
+});
+
 ipcMain.handle("run-app", (event, dir) => {
   const sendLog = (text) => {
     if (mainWindow) {
@@ -206,7 +250,7 @@ ipcMain.handle("run-app", (event, dir) => {
   }
 });
 
-ipcMain.handle("build-app", async (event, dir) => {
+ipcMain.handle("build-app", async (event, dir, buildOptions = {}) => {
   const sendLog = (text) => {
     if (mainWindow) {
       mainWindow.webContents.send("log", text);
@@ -233,7 +277,7 @@ ipcMain.handle("build-app", async (event, dir) => {
     new Promise((resolve) => {
       const child = spawn(command, args, {
         cwd: options.cwd,
-        shell: true,
+        shell: process.platform === "win32",
         env: { ...process.env, ...options.env },
       });
       child.stdout.on("data", (data) => forwardOutput(data, options.stage));
@@ -272,6 +316,22 @@ ipcMain.handle("build-app", async (event, dir) => {
     ["win", "mac", "linux"].includes(platform),
   );
   const hasNodeModules = fs.existsSync(path.join(dir, "node_modules"));
+  let releaseSigning = null;
+  try {
+    releaseSigning = normalizeReleaseSigning(buildOptions.releaseSigning);
+  } catch (error) {
+    const message = `Could not prepare release signing: ${error.message}`;
+    sendLog(message);
+    emitStatus("release-signing", "failed", message);
+    return { success: false, error: message };
+  }
+
+  if (releaseSigning && !buildsAndroid) {
+    const message = "Release signing is available only for Android builds.";
+    sendLog(message);
+    emitStatus("release-signing", "failed", message);
+    return { success: false, error: message };
+  }
 
   sendLog("Starting distribution build process...");
   emitStatus(
@@ -340,15 +400,42 @@ ipcMain.handle("build-app", async (event, dir) => {
   if (!synced)
     return { success: false, error: "Android asset synchronization failed." };
 
-  emitStatus("gradle", "running", "Compiling the debug APK with Gradle.");
+  let signingScriptPath = null;
+  if (releaseSigning) {
+    emitStatus(
+      "release-signing",
+      "running",
+      "Preparing the custom keystore for this release build.",
+    );
+    try {
+      signingScriptPath = await writeEphemeralSigningScript(releaseSigning);
+      emitStatus(
+        "release-signing",
+        "complete",
+        "Custom keystore is ready for signing.",
+      );
+    } catch (error) {
+      const message = `Could not prepare release signing: ${error.message}`;
+      sendLog(message);
+      emitStatus("release-signing", "failed", message);
+      return { success: false, error: message };
+    }
+  }
+
+  const variant = releaseSigning ? "release" : "debug";
+  emitStatus("gradle", "running", `Compiling the ${variant} APK with Gradle.`);
   const gradleCommand =
     process.platform === "win32" ? "gradlew.bat" : "./gradlew";
-  const gradleBuilt = await runProcess(gradleCommand, ["assembleDebug"], {
+  const gradleArguments = signingScriptPath
+    ? ["-I", signingScriptPath, "assembleRelease"]
+    : ["assembleDebug"];
+  const gradleBuilt = await runProcess(gradleCommand, gradleArguments, {
     cwd: path.join(dir, "android"),
     stage: "gradle",
     label: "APK compilation",
-    completeMessage: "Gradle finished compiling the debug APK.",
+    completeMessage: `Gradle finished compiling the ${variant} APK.`,
   });
+  if (signingScriptPath) await fs.remove(signingScriptPath);
   if (!gradleBuilt) return { success: false, error: "APK compilation failed." };
 
   const artifactPath = path.join(
@@ -358,22 +445,77 @@ ipcMain.handle("build-app", async (event, dir) => {
     "build",
     "outputs",
     "apk",
-    "debug",
-    "app-debug.apk",
+    variant,
+    `app-${variant}.apk`,
   );
   if (!fs.existsSync(artifactPath)) {
-    const message = "APK compilation finished without producing app-debug.apk.";
+    const message = `APK compilation finished without producing app-${variant}.apk.`;
     sendLog(message);
     emitStatus("artifact", "failed", message);
     return { success: false, error: message };
   }
 
-  emitStatus("artifact", "complete", "Debug APK is ready to install.", {
-    artifactPath,
-  });
-  emitStatus("complete", "complete", "APK build completed successfully.", {
-    artifactPath,
-  });
-  sendLog(`APK ready: ${artifactPath}`);
-  return { success: true, artifactPath };
+  const checksum = await sha256(artifactPath);
+  const artifactKind = releaseSigning ? "Signed release" : "Debug";
+  emitStatus(
+    "artifact",
+    "complete",
+    `${artifactKind} APK is ready to install.`,
+    {
+      artifactPath,
+      artifactKind,
+      checksum,
+    },
+  );
+  emitStatus(
+    "complete",
+    "complete",
+    `${artifactKind} APK build completed successfully.`,
+    {
+      artifactPath,
+      artifactKind,
+      checksum,
+    },
+  );
+  sendLog(`${artifactKind} APK ready: ${artifactPath}`);
+  return { success: true, artifactPath, artifactKind, checksum };
 });
+
+function normalizeReleaseSigning(releaseSigning) {
+  if (!releaseSigning || !releaseSigning.enabled) return null;
+
+  const keystorePath = path.resolve(String(releaseSigning.keystorePath || ""));
+  const keyAlias = String(releaseSigning.keyAlias || "").trim();
+  const storePassword = String(releaseSigning.storePassword || "");
+  const keyPassword = String(releaseSigning.keyPassword || storePassword);
+  if (
+    !releaseSigning.keystorePath ||
+    !fs.existsSync(keystorePath) ||
+    !fs.statSync(keystorePath).isFile()
+  ) {
+    throw new Error("Select an existing Android keystore file.");
+  }
+  if (!keyAlias || !storePassword || !keyPassword) {
+    throw new Error(
+      "Keystore alias, store password, and key password are required.",
+    );
+  }
+  return { keystorePath, keyAlias, storePassword, keyPassword };
+}
+
+async function writeEphemeralSigningScript(signing) {
+  const escapeGroovy = (value) =>
+    String(value).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+  const scriptPath = path.join(
+    app.getPath("temp"),
+    `pico-signing-${crypto.randomUUID()}.gradle`,
+  );
+  const script = `// Generated in a temporary directory and deleted after one build.\ngradle.beforeProject { picoApp ->\n  if (picoApp.path == ':app') {\n    picoApp.pluginManager.withPlugin('com.android.application') {\n      picoApp.android.signingConfigs.create('picoRelease') {\n        storeFile picoApp.file('${escapeGroovy(signing.keystorePath)}')\n        storePassword '${escapeGroovy(signing.storePassword)}'\n        keyAlias '${escapeGroovy(signing.keyAlias)}'\n        keyPassword '${escapeGroovy(signing.keyPassword)}'\n      }\n      picoApp.android.buildTypes.release.signingConfig = picoApp.android.signingConfigs.picoRelease\n    }\n  }\n}\n`;
+  await fs.outputFile(scriptPath, script, { mode: 0o600 });
+  return scriptPath;
+}
+
+async function sha256(filePath) {
+  const data = await fs.readFile(filePath);
+  return crypto.createHash("sha256").update(data).digest("hex");
+}

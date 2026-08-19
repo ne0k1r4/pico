@@ -23,7 +23,7 @@
           </div>
           <div class="brand-title">
             <h2>pico-chan</h2>
-            <span class="version-tag">v1.5.1</span>
+            <span class="version-tag">v1.6.0</span>
           </div>
         </div>
 
@@ -399,6 +399,57 @@
                       <span class="custom-checkbox">Android (.APK)</span>
                     </label>
                   </div>
+                  <div
+                    id="android-release-options"
+                    class="android-release-options"
+                    hidden
+                  >
+                    <label class="toggle-row">
+                      <input type="checkbox" id="releaseApk" />
+                      <span class="custom-toggle"></span>
+                      <div class="toggle-texts">
+                        <span class="title">Signed Release APK</span>
+                        <span class="desc"
+                          >Sign one release build with your local keystore.
+                          Passwords are never saved.</span
+                        >
+                      </div>
+                    </label>
+                    <div id="keystore-fields" class="keystore-fields" hidden>
+                      <div class="keystore-picker">
+                        <button
+                          type="button"
+                          id="select-keystore-btn"
+                          class="btn-terminal-action"
+                        >
+                          Select Keystore
+                        </button>
+                        <span id="keystore-path" class="keystore-path"
+                          >No keystore selected</span
+                        >
+                      </div>
+                      <div class="keystore-grid">
+                        <label
+                          >Key alias<input
+                            id="keystore-alias"
+                            type="text"
+                            autocomplete="off"
+                        /></label>
+                        <label
+                          >Keystore password<input
+                            id="keystore-password"
+                            type="password"
+                            autocomplete="new-password"
+                        /></label>
+                        <label
+                          >Key password<input
+                            id="key-password"
+                            type="password"
+                            autocomplete="new-password"
+                        /></label>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -465,20 +516,33 @@
               <li data-stage="gradle">
                 <span class="stage-marker"></span><span>Gradle compile</span>
               </li>
+              <li data-stage="release-signing">
+                <span class="stage-marker"></span><span>Release signing</span>
+              </li>
               <li data-stage="artifact">
                 <span class="stage-marker"></span><span>APK artifact</span>
               </li>
             </ol>
             <div id="apk-artifact-path" class="apk-artifact-path" hidden></div>
-            <button
-              id="download-apk-btn"
-              class="download-apk-btn"
-              type="button"
-              hidden
-              disabled
-            >
-              Download Debug APK
-            </button>
+            <div id="apk-artifact-actions" class="apk-artifact-actions" hidden>
+              <button
+                id="download-apk-btn"
+                class="download-apk-btn"
+                type="button"
+                disabled
+              >
+                Download Debug APK
+              </button>
+              <button
+                id="copy-checksum-btn"
+                class="copy-checksum-btn"
+                type="button"
+                disabled
+              >
+                Copy SHA-256
+              </button>
+            </div>
+            <code id="apk-checksum" class="apk-checksum" hidden></code>
           </div>
           <div class="dev-terminal">
             <div class="terminal-bar">
@@ -585,6 +649,22 @@
         "toolbar-toggle-wrapper",
       );
       const showToolbarCheckbox = document.getElementById("showToolbar");
+      const androidPlatformCheckbox = form.querySelector(
+        'input[name="platforms"][value="android"]',
+      );
+      const androidReleaseOptions = document.getElementById(
+        "android-release-options",
+      );
+      const releaseApkCheckbox = document.getElementById("releaseApk");
+      const keystoreFields = document.getElementById("keystore-fields");
+      const selectKeystoreButton = document.getElementById(
+        "select-keystore-btn",
+      );
+      const keystorePathLabel = document.getElementById("keystore-path");
+      const keystoreAlias = document.getElementById("keystore-alias");
+      const keystorePassword = document.getElementById("keystore-password");
+      const keyPassword = document.getElementById("key-password");
+      let selectedKeystorePath = "";
 
       injectCSSCheckbox.addEventListener("change", () => {
         cssBlock.classList.toggle("active", injectCSSCheckbox.checked);
@@ -606,6 +686,29 @@
           toolbarToggleWrapper.style.pointerEvents = "auto";
         }
         updateCLIPreview();
+      });
+
+      function refreshAndroidReleaseControls() {
+        const buildsAndroid = androidPlatformCheckbox.checked;
+        androidReleaseOptions.hidden = !buildsAndroid;
+        if (!buildsAndroid) releaseApkCheckbox.checked = false;
+        keystoreFields.hidden = !buildsAndroid || !releaseApkCheckbox.checked;
+      }
+
+      androidPlatformCheckbox.addEventListener(
+        "change",
+        refreshAndroidReleaseControls,
+      );
+      releaseApkCheckbox.addEventListener(
+        "change",
+        refreshAndroidReleaseControls,
+      );
+      selectKeystoreButton.addEventListener("click", async () => {
+        const selection = await window.picoAPI.selectKeystore();
+        if (selection.success) {
+          selectedKeystorePath = selection.path;
+          keystorePathLabel.textContent = selection.path;
+        }
       });
 
       function updateCLIPreview() {
@@ -696,10 +799,17 @@
       const apkBuildState = document.getElementById("apk-build-state");
       const apkBuildMessage = document.getElementById("apk-build-message");
       const apkArtifactPath = document.getElementById("apk-artifact-path");
+      const apkArtifactActions = document.getElementById(
+        "apk-artifact-actions",
+      );
       const downloadApkButton = document.getElementById("download-apk-btn");
+      const copyChecksumButton = document.getElementById("copy-checksum-btn");
+      const apkChecksum = document.getElementById("apk-checksum");
       const terminalTitle = document.getElementById("terminal-title");
       const buildSpinner = document.getElementById("build-spinner");
       let apkArtifactSource = "";
+      let apkArtifactKind = "Debug";
+      let apkArtifactChecksum = "";
 
       function resetApkBuildStatus(showStatus) {
         apkBuildStatus.hidden = !showStatus;
@@ -709,9 +819,15 @@
         apkArtifactPath.hidden = true;
         apkArtifactPath.textContent = "";
         apkArtifactSource = "";
-        downloadApkButton.hidden = true;
+        apkArtifactKind = "Debug";
+        apkArtifactChecksum = "";
+        apkArtifactActions.hidden = true;
         downloadApkButton.disabled = true;
         downloadApkButton.textContent = "Download Debug APK";
+        copyChecksumButton.disabled = true;
+        copyChecksumButton.textContent = "Copy SHA-256";
+        apkChecksum.hidden = true;
+        apkChecksum.textContent = "";
         document.querySelectorAll(".apk-stage-list li").forEach((stage) => {
           stage.className = "";
         });
@@ -741,10 +857,16 @@
 
         if (status.artifactPath) {
           apkArtifactSource = status.artifactPath;
+          apkArtifactKind = status.artifactKind || "Debug";
+          apkArtifactChecksum = status.checksum || "";
           apkArtifactPath.textContent = `APK: ${status.artifactPath}`;
           apkArtifactPath.hidden = false;
-          downloadApkButton.hidden = false;
+          apkArtifactActions.hidden = false;
           downloadApkButton.disabled = false;
+          downloadApkButton.textContent = `Download ${apkArtifactKind} APK`;
+          copyChecksumButton.disabled = !apkArtifactChecksum;
+          apkChecksum.textContent = `SHA-256: ${apkArtifactChecksum}`;
+          apkChecksum.hidden = !apkArtifactChecksum;
         }
         if (status.state === "failed" || status.stage === "complete")
           buildSpinner.hidden = true;
@@ -880,17 +1002,46 @@
         }
       });
 
+      copyChecksumButton.addEventListener("click", async () => {
+        if (!apkArtifactChecksum) return;
+        const result = await window.picoAPI.copyChecksum(apkArtifactChecksum);
+        copyChecksumButton.textContent = result.success
+          ? "Checksum Copied"
+          : "Copy Failed";
+        setTimeout(() => {
+          copyChecksumButton.textContent = "Copy SHA-256";
+        }, 1400);
+      });
+
       document
         .getElementById("build-installer-btn")
         .addEventListener("click", () => {
           if (buildPath) {
+            const releaseSigning = releaseApkCheckbox.checked
+              ? {
+                  enabled: true,
+                  keystorePath: selectedKeystorePath,
+                  keyAlias: keystoreAlias.value.trim(),
+                  storePassword: keystorePassword.value,
+                  keyPassword: keyPassword.value || keystorePassword.value,
+                }
+              : null;
+            if (releaseSigning) {
+              // Credentials are handed to the one-time build only and are not retained in the UI.
+              selectedKeystorePath = "";
+              keystorePathLabel.textContent = "No keystore selected";
+              keystorePassword.value = "";
+              keyPassword.value = "";
+              releaseApkCheckbox.checked = false;
+              refreshAndroidReleaseControls();
+            }
             logsConsole.innerHTML = "";
             statusMsg.textContent = "System: Packaging...";
             resetApkBuildStatus(generatedPlatforms.includes("android"));
             switchActiveView("progress-view");
             attachBuildListeners();
             window.picoAPI
-              .buildApp(buildPath)
+              .buildApp(buildPath, { releaseSigning })
               .then((result) => {
                 statusMsg.textContent = result.success
                   ? "System: Complete"

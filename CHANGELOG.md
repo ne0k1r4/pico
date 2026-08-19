@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.6.0] — 2026-08-19
+
+### Added
+
+- A custom-keystore **Signed Release APK** flow in the desktop interface, with native keystore selection and one-build-only alias and password fields.
+- SHA-256 display and native clipboard copy controls beside every completed APK download action.
+- Dual GUI workflow verification for debug and release APKs, including confirmation that the release artifact is signed by the selected keystore.
+
+### Security
+
+- Keystore passwords are kept in memory only, never written to generated projects, and are removed from the interface immediately after handoff to the build process.
+- Pico writes the temporary Gradle signing initializer with owner-only permissions and removes it after the build.
+
+---
+
 ## [1.5.1] — 2026-08-18
 
 ### Added

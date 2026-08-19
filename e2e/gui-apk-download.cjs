@@ -1,13 +1,16 @@
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, clipboard } = require("electron");
 const { existsSync } = require("node:fs");
 const { rm } = require("node:fs/promises");
 const path = require("node:path");
 
 const repoRoot = path.resolve(__dirname, "..");
 const outputRoot = path.join("/tmp", "pico-gui-apk-e2e");
+const releaseMode = process.env.PICO_E2E_RELEASE === "1";
 const downloadedApk = path.join(
   "/home/ubuntu/Downloads",
-  "pico-gui-e2e-download.apk",
+  releaseMode
+    ? "pico-gui-e2e-release-download.apk"
+    : "pico-gui-e2e-download.apk",
 );
 
 process.env.PICO_AUTOMATED_DOWNLOAD_PATH = downloadedApk;
@@ -48,7 +51,9 @@ async function runWorkflow() {
     15_000,
   );
 
-  console.log("E2E: GUI ready; submitting Android project");
+  console.log(
+    `E2E: GUI ready; submitting ${releaseMode ? "signed release" : "debug"} Android project`,
+  );
   const result = await window.webContents.executeJavaScript(`
     (async () => {
       const form = document.getElementById("pico-generator-form");
@@ -56,7 +61,26 @@ async function runWorkflow() {
       document.getElementById("name").value = "Pico GUI E2E";
       document.getElementById("outputDir").value = ${JSON.stringify(outputRoot)};
       document.querySelector('input[name="platforms"][value="linux"]').checked = false;
-      document.querySelector('input[name="platforms"][value="android"]').checked = true;
+      const androidTarget = document.querySelector('input[name="platforms"][value="android"]');
+      androidTarget.checked = true;
+      androidTarget.dispatchEvent(new Event("change"));
+      if (${JSON.stringify(releaseMode)}) {
+        document.getElementById("releaseApk").checked = true;
+        document.getElementById("releaseApk").dispatchEvent(new Event("change"));
+        document.getElementById("select-keystore-btn").click();
+        await new Promise((resolve, reject) => {
+          const startedAt = Date.now();
+          const poll = () => {
+            if (!document.getElementById("keystore-path").textContent.includes("No keystore")) return resolve();
+            if (Date.now() - startedAt > 5000) return reject(new Error("Automated keystore selection did not complete."));
+            setTimeout(poll, 50);
+          };
+          poll();
+        });
+        document.getElementById("keystore-alias").value = "pico-e2e";
+        document.getElementById("keystore-password").value = "changeit";
+        document.getElementById("key-password").value = "changeit";
+      }
       form.requestSubmit();
 
       const waitForDom = (condition, timeoutMs = 240000) => new Promise((resolve, reject) => {
@@ -71,20 +95,31 @@ async function runWorkflow() {
 
       await waitForDom(() => document.getElementById("success-view").classList.contains("active"), 30000);
       document.getElementById("build-installer-btn").click();
-      await waitForDom(() => !document.getElementById("download-apk-btn").hidden, 240000);
+      await waitForDom(() => !document.getElementById("apk-artifact-actions").hidden || document.getElementById("apk-build-state").textContent === "Failed", 240000);
+      if (document.getElementById("apk-build-state").textContent === "Failed") {
+        throw new Error(document.getElementById("apk-build-message").textContent);
+      }
+      document.getElementById("copy-checksum-btn").click();
+      await waitForDom(() => document.getElementById("copy-checksum-btn").textContent.includes("Copied"), 5000);
       document.getElementById("download-apk-btn").click();
       await waitForDom(() => document.getElementById("apk-build-message").textContent.includes("download completed"), 30000);
 
       return {
         status: document.getElementById("apk-build-state").textContent,
         message: document.getElementById("apk-build-message").textContent,
-        artifact: document.getElementById("apk-artifact-path").textContent
+        artifact: document.getElementById("apk-artifact-path").textContent,
+        checksum: document.getElementById("apk-checksum").textContent,
+        downloadLabel: document.getElementById("download-apk-btn").textContent
       };
     })()
   `);
 
   if (!existsSync(downloadedApk)) {
     throw new Error("GUI reported success but did not save the APK.");
+  }
+  const displayedChecksum = result.checksum.replace(/^SHA-256:\s*/, "");
+  if (clipboard.readText() !== displayedChecksum) {
+    throw new Error("GUI did not copy the displayed SHA-256 checksum.");
   }
 
   console.log(JSON.stringify({ ...result, downloadedApk }));

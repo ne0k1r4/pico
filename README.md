@@ -3,7 +3,7 @@
 [![Pico CI](https://github.com/ne0k1r4/pico/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ne0k1r4/pico/actions/workflows/ci.yml)
 [![Build workers](https://github.com/ne0k1r4/pico/actions/workflows/build-workers.yml/badge.svg?branch=main)](https://github.com/ne0k1r4/pico/actions/workflows/build-workers.yml)
 
-**Pico** turns an HTTP or HTTPS website into a native project that can be packaged for desktop operating systems or Android. Version **1.4.1** generates Electron 43 desktop applications and Capacitor 8 Android projects, including an idempotent Android setup command, debug-APK workflow, and build-worker support.
+**Pico** turns an HTTP or HTTPS website into a native project that can be packaged for desktop operating systems or Android. Version **1.6.0** generates Electron 43 desktop applications and Capacitor 8 Android projects, including idempotent Android setup, debug and custom-keystore release APK workflows, and build-worker support.
 
 > Pico wraps the target website in a native runtime. It does not copy the website's source code, make an offline mirror, or bypass the website's authentication and access controls.
 
@@ -144,7 +144,9 @@ npm run gui
 
 Select **Android (.APK)** under packaging targets to create a mobile project. For Android-only output, the **Run App Launcher** action explains that an emulator or physical device is required; use **Compile Native Installer** to prepare and build the APK instead.
 
-During an Android build, the terminal view now adds a live status panel for dependency installation, Android project preparation, Capacitor asset synchronization, Gradle compilation, and the final APK artifact. When the build completes, the panel displays the exact `app-debug.apk` path; an error state identifies the stage that needs attention.
+During an Android build, the terminal view now adds a live status panel for dependency installation, Android project preparation, Capacitor asset synchronization, Gradle compilation, release signing, and the final APK artifact. When the build completes, the panel displays the artifact path, its SHA-256 checksum, a **Copy SHA-256** action, and a **Download** action that saves the APK through a native file dialog.
+
+To create a signed release APK, select **Android (.APK)** and then enable **Signed Release APK**. Use **Select Keystore** to choose a local `.jks`, `.keystore`, `.p12`, or `.pfx` file; provide its alias and passwords; then choose **Compile Native Installer**. Pico passes these values to a temporary owner-only Gradle initializer for that build and deletes the initializer afterward. It does not add passwords, aliases, or the keystore path to the generated project or preserve them in the interface after the build begins.
 
 ## Build-worker deployment
 
