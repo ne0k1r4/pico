@@ -3,33 +3,36 @@
 [![Pico CI](https://github.com/ne0k1r4/pico/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ne0k1r4/pico/actions/workflows/ci.yml)
 [![Build workers](https://github.com/ne0k1r4/pico/actions/workflows/build-workers.yml/badge.svg?branch=main)](https://github.com/ne0k1r4/pico/actions/workflows/build-workers.yml)
 
-**Pico** turns an HTTP or HTTPS website into a native project that can be packaged for desktop operating systems or Android. Version **1.7.0** generates Electron 43 desktop applications and Capacitor 8 Android projects, including idempotent Android setup, custom-keystore release APKs, signed Play Store App Bundles, and build-worker support.
+Pico turns any web application into a standalone desktop app or Android APK. It generates ready-to-build Electron applications for desktop platforms (Linux, Windows, macOS) and Capacitor projects for Android devices.
 
-> Pico wraps the target website in a native runtime. It does not copy the website's source code, make an offline mirror, or bypass the website's authentication and access controls.
+> **Note:** Pico wraps web applications inside native runtime containers. It does not scrape source code, mirror sites offline, or bypass site authentication.
 
-| Target  | Generated runtime | Primary output                         | Build environment                  |
-| ------- | ----------------- | -------------------------------------- | ---------------------------------- |
-| Linux   | Electron          | `.AppImage`, `.deb`                    | Linux host                         |
-| Windows | Electron          | NSIS `.exe`                            | Windows host or compatible builder |
-| macOS   | Electron          | `.dmg`                                 | macOS host                         |
-| Android | Capacitor WebView | Debug or release `.apk`, signed `.aab` | Java, Android SDK, Gradle wrapper  |
+---
 
-## Requirements
+## Supported Targets
 
-Pico requires **Node.js 22 or later**. Check the active runtime with `node --version` before installing. Desktop packaging also requires the usual host-platform dependencies used by Electron Builder.
+| Platform | Runtime | Output Format | Build Environment |
+| --- | --- | --- | --- |
+| **Linux** | Electron | `.AppImage`, `.deb` | Linux host |
+| **Windows** | Electron | NSIS `.exe` | Windows host or builder |
+| **macOS** | Electron | `.dmg` | macOS host |
+| **Android** | Capacitor WebView | Debug/Release `.apk`, Signed `.aab` | JDK, Android SDK & Gradle |
 
-Android projects require a JDK, Android SDK command-line tools, platform tools, and a matching Android platform/build-tools installation. Capacitor supports Android API 24 and later; physical devices require an up-to-date Android WebView. [1]
+---
 
-| Purpose                           | Minimum requirement              | Verification command        |
-| --------------------------------- | -------------------------------- | --------------------------- |
-| Run Pico                          | Node.js 22                       | `node --version`            |
-| Build an Android APK              | JDK with `javac`                 | `javac -version`            |
-| Manage Android packages           | Android SDK tools                | `sdkmanager --version`      |
-| Build a generated Android project | Android SDK platform/build-tools | `npm run android:apk:debug` |
+## Prerequisites
 
-## Install
+- **Node.js 22+**: Check your version with `node --version`.
+- **Desktop Builds**: Standard build tools required by Electron Builder for your host OS.
+- **Android Builds**: OpenJDK 21, Android SDK command-line tools, and platform tools (Android API 24+ supported).
 
-Clone the repository, install its dependencies, and link the CLI locally.
+---
+
+## Quick Start
+
+### Installation
+
+Clone the repo, install dependencies, and link the CLI executable:
 
 ```bash
 git clone https://github.com/ne0k1r4/pico.git
@@ -38,52 +41,58 @@ npm install
 npm link
 ```
 
-After linking, `pico` is available as a command in the active Node.js environment. Use `npm run gui` instead if you prefer the desktop configuration interface.
+Prefer a GUI? Run `npm run gui` to launch the graphical app builder interface.
 
-## Generate an application
+---
 
-Run Pico without arguments to use the interactive workflow. It asks for the website, application name, packaging targets, and optional desktop settings.
+### Basic Usage
+
+#### Interactive Mode
+Run `pico` without parameters to start the step-by-step wizard:
 
 ```bash
 pico
 ```
 
-For repeatable builds and CI, provide the site and application name directly.
+#### Command Line
+Pass parameters directly for fast, repeatable builds:
 
 ```bash
-pico --url "https://example.com" --name "Example App" --platforms linux
+pico --url "https://example.com" --name "Example App" --platforms linux,android
 ```
 
-Pico validates that the target is a syntactically valid `http://` or `https://` URL before it creates project files. A transient reachability check in the interactive flow is advisory, so an otherwise valid site can still be packaged when the target is temporarily unavailable.
+---
 
-### CLI reference
+## CLI Options
 
-| Flag                             | Description                                                                 |
-| -------------------------------- | --------------------------------------------------------------------------- |
-| `--url <url>`                    | Required website URL. Pico accepts HTTP and HTTPS only.                     |
-| `--name <name>`                  | Required application display name.                                          |
-| `--outputDir <dir>`              | Project output folder; default: `./apps`.                                   |
-| `--platforms <list>`             | Comma-separated targets: `linux,win,mac,android`.                           |
-| `--style <style>`                | Desktop window style: `normal`, `frameless`, or `minimal`.                  |
-| `--no-toolbar`                   | Hides the Electron navigation toolbar.                                      |
-| `--tray`                         | Minimizes a desktop app to the system tray when supported.                  |
-| `--always-on-top`                | Keeps a desktop window above other windows.                                 |
-| `--dark`                         | Applies the desktop dark-mode injection.                                    |
-| `--css <css>`                    | Enables and injects a desktop custom CSS string.                            |
-| `--js <js>`                      | Enables desktop custom JavaScript at document-ready.                        |
-| `--user-agent <ua>`              | Overrides the desktop request user agent.                                   |
-| `--protocol <scheme>`            | Registers a custom desktop deep-link scheme.                                |
-| `--proxy <url>`                  | Configures an HTTP or SOCKS proxy for desktop output.                       |
-| `--shortcuts <json>`             | JSON map of desktop global shortcuts. Invalid JSON is rejected.             |
-| `--block-ads`                    | Enables the desktop request filter for the bundled tracker-domain list.     |
-| `--width <px>` / `--height <px>` | Positive whole-number desktop window dimensions.                            |
-| `--no-remember`                  | Disables desktop window-size persistence.                                   |
-| `--no-icon`                      | Skips website favicon retrieval and uses Pico's fallback icon.              |
-| `--build`                        | Installs generated dependencies and starts the selected packaging workflow. |
+| Flag | Description |
+| --- | --- |
+| `--url <url>` | Target website URL (HTTP or HTTPS required). |
+| `--name <name>` | Display name for the generated application. |
+| `--outputDir <dir>` | Destination folder for the project (default: `./apps`). |
+| `--platforms <list>` | Comma-separated targets (`linux,win,mac,android`). |
+| `--style <style>` | Window style (`normal`, `frameless`, `minimal`). |
+| `--no-toolbar` | Hide the navigation toolbar. |
+| `--tray` | Minimize window to system tray. |
+| `--always-on-top` | Keep window pinned above other windows. |
+| `--dark` | Enable force-dark mode styling. |
+| `--css <css>` | Custom CSS string to inject into the renderer. |
+| `--js <js>` | Custom JS snippet to run at document-ready. |
+| `--user-agent <ua>` | Override HTTP request User-Agent header. |
+| `--protocol <scheme>` | Register custom deep-link scheme (e.g. `myapp://`). |
+| `--proxy <url>` | Network proxy URL (HTTP or SOCKS5). |
+| `--shortcuts <json>` | JSON mapping for global desktop keyboard shortcuts. |
+| `--block-ads` | Enable domain-level tracker and ad blocking. |
+| `--width <px>` / `--height <px>` | Initial desktop window dimensions. |
+| `--no-remember` | Disable persistent window sizing across launches. |
+| `--no-icon` | Skip fetching site favicon and use default mascot icon. |
+| `--build` | Automatically install dependencies and run target build script. |
 
-## Desktop output
+---
 
-Desktop projects contain Electron runtime files and are ready to install and run locally.
+## Building Desktop Apps
+
+Navigate into the generated project folder to test or build:
 
 ```bash
 cd apps/example-app
@@ -91,17 +100,19 @@ npm install
 npm start
 ```
 
-Package the project for the host target with the generated script.
+To package the application into a distribution binary for your current OS:
 
 ```bash
 npm run build:this
 ```
 
-For a desktop-only target, this calls Electron Builder and writes artifacts under `dist/`. Cross-platform packaging may require building on the target operating system, particularly for macOS signing and notarization.
+Build outputs are saved to `dist/`.
 
-## Android APK output
+---
 
-Use the Android target to generate a Capacitor project that opens the selected website inside an Android WebView.
+## Building Android APKs
+
+Generate an Android target project using Capacitor:
 
 ```bash
 pico --url "https://example.com" --name "Example Mobile" --platforms android
@@ -111,75 +122,65 @@ npm run android:add
 npm run android:apk:debug
 ```
 
-The generated `android:add` command is safe to rerun. It reuses an existing `android/` directory instead of deleting a native project that may contain local changes. `android:sync` also runs this guard before it copies the launcher page and updates Capacitor configuration.
+The resulting debug APK is created at:
+`android/app/build/outputs/apk/debug/app-debug.apk`
 
-| Command                     | Outcome                                                                                               |
-| --------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `npm run android:add`       | Creates the native Android directory once, or reuses it on later runs.                                |
-| `npm run android:sync`      | Copies the current web launcher and refreshes native Capacitor configuration.                         |
-| `npm run android:apk:debug` | Builds a locally signed debug APK.                                                                    |
-| `npm run android:apk`       | Starts Capacitor's Android APK build flow; configure a release keystore for distributable output. [2] |
+### Android Build Commands
 
-The debug APK is written to:
+| Command | Action |
+| --- | --- |
+| `npm run android:add` | Initializes the native Android project directory safely (idempotent). |
+| `npm run android:sync` | Syncs web launcher assets and updates Capacitor configuration. |
+| `npm run android:apk:debug` | Compiles a local debug APK signed with debug keystore. |
+| `npm run android:apk` | Runs full production build flow for release APKs or App Bundles. |
 
-```text
-android/app/build/outputs/apk/debug/app-debug.apk
-```
+> **Note:** Desktop-specific features (custom CSS/JS injection, navigation bar, system tray, ad-blocker) are desktop-only and do not apply to the native Android WebView.
 
-> A debug APK is signed with the local Android debug certificate. It is appropriate for local installation and QA, not for Play Store distribution. Use a private release keystore and a release-signing workflow before public delivery.
+---
 
-Pico generated and verified a debug APK for `https://sujalinfo.in` during the v1.4.1 validation pass. The application used package ID `io.pico.appsujalinfo`, was built successfully with the Gradle wrapper, and passed APK signature verification.
+## Desktop GUI Application
 
-### Android limitations
-
-Android output intentionally uses a native WebView. Electron-specific features—including the desktop toolbar, system tray, Electron request filtering, and renderer CSS/JavaScript injection—do not transfer to Android. Website authentication, cookies, and permissions are controlled by the Android WebView and the target site.
-
-### Desktop GUI
-
-Launch Pico's desktop GUI with:
+Pico includes a desktop GUI application built with Electron:
 
 ```bash
 npm run gui
 ```
 
-Select **Android (.APK)** under packaging targets to create a mobile project. For Android-only output, the **Run App Launcher** action explains that an emulator or physical device is required; use **Compile Native Installer** to prepare and build the APK instead.
+Features included in the GUI interface:
+- Visual project configuration form for all CLI parameters.
+- Built-in APK builder with keystore selection for signed release APKs (`.apk`) and Google Play App Bundles (`.aab`).
+- Real-time build progress logs, SHA-256 checksum verification, and direct download actions.
 
-During an Android build, the terminal view adds a live status panel for dependency installation, Android project preparation, Capacitor asset synchronization, Gradle compilation, release signing, App Bundle output, and the final artifacts. Completed APKs and App Bundles each display an exact path, SHA-256 checksum, **Copy SHA-256** action, and native-file-dialog download action.
+---
 
-To create a signed release APK, select **Android (.APK)** and then enable **Signed Release APK**. Use **Select Keystore** to choose a local `.jks`, `.keystore`, `.p12`, or `.pfx` file; enter the keystore password to discover available aliases; select the appropriate alias; and provide the key password. Enable **Create Android App Bundle (.aab)** to produce a signed Play Store submission bundle alongside the APK. Pico passes these values to a temporary owner-only Gradle initializer for that build and deletes the initializer afterward. It does not add passwords, aliases, or the keystore path to the generated project or preserve them in the interface after the build begins.
+## Distributed Build Workers
 
-## Build-worker deployment
+Pico provides containerized queue-worker services under `services/build-workers/` for headless building in CI/CD or Kubernetes environments.
 
-`services/build-workers/` contains queue consumers for unattended artifact builds. The worker validates a source archive, checks its SHA-256 digest, builds the selected platform, finds output artifacts, and uploads the artifacts and JSONL build log to object storage.
+| Target | Command | Dockerfile | Output |
+| --- | --- | --- | --- |
+| **Linux** | `npm run start:linux` | `Dockerfile.linux` | `.AppImage`, `.deb` |
+| **Windows** | `npm run start:windows` | `Dockerfile.windows` | `.exe` |
+| **macOS** | `npm run start:macos` | Native macOS host | `.dmg` |
+| **Android** | `npm run start:android` | `Dockerfile.android` | `.apk`, `.aab` |
 
-Android jobs use Pico-generated Capacitor sources rather than a Tauri workspace. The Android command path installs package dependencies, ensures the Android project exists, synchronizes Capacitor, runs Gradle's debug-APK task, then uploads files found beneath `android/app/build/outputs/`.
-
-| Worker target | Start command           | Container definition | Uploaded artifact |
-| ------------- | ----------------------- | -------------------- | ----------------- |
-| Linux         | `npm run start:linux`   | `Dockerfile.linux`   | Desktop bundle    |
-| Windows       | `npm run start:windows` | `Dockerfile.windows` | Desktop bundle    |
-| macOS         | `npm run start:macos`   | Native macOS host    | Desktop bundle    |
-| Android       | `npm run start:android` | `Dockerfile.android` | `.apk`            |
-
-The Android worker image installs Node.js 22, Bun, OpenJDK 21, Android SDK command-line tools, API 35 build components, and platform tools. Configure `REDIS_URL`, `ARTIFACT_BUCKET`, storage credentials, and `WORKER_PLATFORM=android` before deployment. The worker requires a persistent build environment with sufficient storage for Gradle and Android SDK caches.
-
-Apply the provided Kubernetes manifest after creating the `pico-build-worker` secret with the required Redis and object-storage values. The manifest configures one Android worker with secure pod defaults, build-appropriate resources, and an isolated ephemeral workspace.
+Deploy worker services to Kubernetes using the provided manifests:
 
 ```bash
 kubectl apply -f services/build-workers/deploy/kubernetes/android-worker.yaml
 ```
 
-The **Pico CI** badge reports root generator tests, while the **Build workers** badge reports worker tests, type checking, and container builds. On pushes to `main`, the worker workflow publishes `ghcr.io/ne0k1r4/pico-build-worker-android` for the deployment manifest.
+---
 
-## Test and validate
+## Testing
 
-Run the main generator tests from the repository root.
+Run generator tests from root:
 
 ```bash
 npm test
 ```
 
-Run the build-worker tests and TypeScript check separately.
+Run build-worker tests and type checks:
 
 ```bash
 cd services/build-workers
@@ -188,37 +189,34 @@ bun test
 bun run typecheck
 ```
 
-The root suite covers desktop generation, fallback icons, configuration fields, Android project structure, Android package IDs, and input validation. The worker suite covers desktop and Android command planning plus queue-schema acceptance.
+---
 
 ## Troubleshooting
 
-| Symptom                                                | Likely cause                                                         | Resolution                                                                                      |
-| ------------------------------------------------------ | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `sdkmanager: command not found`                        | Android SDK command-line tools are absent from `PATH`.               | Install the command-line tools and add `<ANDROID_SDK_ROOT>/cmdline-tools/latest/bin` to `PATH`. |
-| Gradle reports that `javaCompiler` is unavailable      | A JRE is installed without the JDK compiler.                         | Install a full JDK and set `JAVA_HOME` to its installation directory.                           |
-| `android platform already exists`                      | A project invokes Capacitor directly instead of Pico's guard script. | Use `npm run android:add`; it is safe to rerun.                                                 |
-| Debug APK build cannot find an SDK platform            | The required Android platform/build-tools package is missing.        | Install the platform requested by Gradle with `sdkmanager`, then rerun the build.               |
-| Android app opens but a desktop-only option is missing | Android uses Capacitor WebView rather than Electron.                 | Use the documented Android workflow or implement an Android-native equivalent.                  |
-| Website cannot be packaged                             | The target URL is malformed or uses a non-web scheme.                | Supply a full HTTP or HTTPS URL.                                                                |
+| Symptom | Cause | Solution |
+| --- | --- | --- |
+| `sdkmanager: command not found` | Android SDK tools missing from `PATH`. | Add `$ANDROID_SDK_ROOT/cmdline-tools/latest/bin` to your environment `PATH`. |
+| `javaCompiler unavailable` | Only JRE installed instead of full JDK. | Install OpenJDK 21 and export `JAVA_HOME`. |
+| `android platform already exists` | Direct Capacitor invocation. | Use `npm run android:add` guard script. |
+| Missing SDK platform package | Required Android API level not installed. | Run `sdkmanager "platforms;android-35"` to download. |
 
-## Repository layout
+---
 
-| Path                          | Purpose                                                        |
-| ----------------------------- | -------------------------------------------------------------- |
-| `src/cli.js`                  | Interactive and non-interactive Pico command-line interface.   |
-| `src/generator.js`            | Validates project input and writes desktop and Android output. |
-| `src/gui.js` / `src/gui.html` | Electron-based desktop configuration interface.                |
-| `template/`                   | Electron runtime template copied to desktop projects.          |
-| `tests/`                      | Node.js generator regression tests.                            |
-| `services/build-workers/`     | Queue-based platform builders, including `Dockerfile.android`. |
-| `CHANGELOG.md`                | Versioned feature and bug-fix history.                         |
+## Project Structure
+
+```text
+src/
+├── cli.js            # CLI entry point and interactive wizard
+├── generator.js      # Project scaffolding and template rendering engine
+├── gui.js / gui.html # Graphical desktop app builder interface
+└── utils.js          # Favicon fetcher and URL validation helpers
+template/             # Base Electron template for desktop projects
+services/             # Microservices (website analyzer, build workers, tauri generator)
+tests/                # Test suites for generator and GUI status
+```
+
+---
 
 ## License
 
-Pico is released under the [MIT License](LICENSE).
-
-## References
-
-[1] [Capacitor Android Documentation](https://capacitorjs.com/docs/android)
-
-[2] [Capacitor CLI: `cap build`](https://capacitorjs.com/docs/cli/commands/build)
+Released under the [MIT License](LICENSE).

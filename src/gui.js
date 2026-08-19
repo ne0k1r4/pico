@@ -448,7 +448,6 @@ ipcMain.handle("build-app", async (event, dir, buildOptions = {}) => {
     return { success: true };
   }
 
-  // Capacitor's setup script is safe to repeat and preserves a prepared Android project.
   emitStatus(
     "native-project",
     "running",

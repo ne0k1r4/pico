@@ -1184,7 +1184,6 @@
               releaseSigning && includeAppBundleCheckbox.checked,
             );
             if (releaseSigning) {
-              // Credentials are handed to the one-time build only and are not retained in the UI.
               selectedKeystorePath = "";
               keystorePathLabel.textContent = "No keystore selected";
               keystorePassword.value = "";

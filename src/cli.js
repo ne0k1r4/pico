@@ -9,7 +9,6 @@ let inquirer
 let chalk
 
 async function loadCliDependencies() {
-  // Pico remains CommonJS, while the latest prompt and colour libraries are ESM-only.
   const [inquirerModule, chalkModule] = await Promise.all([
     import('inquirer'),
     import('chalk')

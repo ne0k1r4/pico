@@ -46,7 +46,6 @@ export function rustTarget(platform: BuildPlatform, architecture: BuildArchitect
 
 export function buildCommands(platform: BuildPlatform, architecture: BuildArchitecture): BuildCommand[] {
   if (platform === "android") {
-    // Android sources are Pico-generated Capacitor projects, not Tauri workspaces.
     return [
       { command: "npm", args: ["install", "--ignore-scripts"] },
       { command: "npm", args: ["run", "android:apk:debug"] }

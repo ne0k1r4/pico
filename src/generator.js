@@ -4,7 +4,6 @@ const zlib = require('zlib')
 
 const TEMPLATE_DIR = path.join(__dirname, '../template')
 
-// Keep generated projects on the same well-tested desktop toolchain as Pico.
 const GENERATED_RUNTIME = Object.freeze({
   electron: '^43.4.0',
   electronBuilder: '^26.15.3'
@@ -194,7 +193,6 @@ async function writeAndroidProjectFiles(outDir, slug, config) {
   }
   const webDir = path.join(outDir, 'www')
 
-  // The local page keeps Capacitor's native bridge available before it opens the chosen website.
   const launcherHtml = `<!doctype html>
 <html lang="en">
   <head>
@@ -246,7 +244,6 @@ function getAndroidAllowedHosts(url) {
 }
 
 function buildAndroidAppId(slug) {
-  // Android requires every application-ID segment to start with a letter.
   return `io.pico.app${slug.replace(/-/g, '') || 'app'}`
 }
 
