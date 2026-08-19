@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.7.0] — 2026-08-19
+
+### Added
+
+- Automatic discovery and datalist suggestions for aliases in a selected Android keystore.
+- Optional signed Android App Bundle (`.aab`) output alongside a signed release APK, with an in-interface download and SHA-256 copy action.
+- GUI end-to-end coverage for multi-alias keystore discovery, user-selected alias signing, release APKs, App Bundles, downloads, and checksum copying.
+
+### Security
+
+- Alias discovery passes the keystore password only to a short-lived local `keytool` process and never writes it to disk or generated project configuration.
+
+---
+
 ## [1.6.0] — 2026-08-19
 
 ### Added

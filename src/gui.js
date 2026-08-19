@@ -11,11 +11,13 @@ const {
 const path = require("path");
 const fs = require("fs-extra");
 const crypto = require("crypto");
-const { spawn } = require("child_process");
+const { execFile, spawn } = require("child_process");
+const { promisify } = require("util");
 const { generateApp } = require("./generator");
 const { validateUrl, fetchFavicon } = require("./utils");
 
 let mainWindow = null;
+const execFileAsync = promisify(execFile);
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -86,40 +88,64 @@ ipcMain.handle("open-folder", async (event, dir) => {
   await shell.openPath(dir);
 });
 
-ipcMain.handle("download-apk", async (event, artifactPath) => {
+async function saveArtifact(artifactPath) {
   const sourcePath = path.resolve(String(artifactPath || ""));
-  if (path.extname(sourcePath).toLowerCase() !== ".apk") {
-    return { success: false, error: "Only APK artifacts can be downloaded." };
+  const extension = path.extname(sourcePath).toLowerCase();
+  const artifactType = {
+    ".apk": { label: "APK", filter: "Android packages" },
+    ".aab": { label: "Android App Bundle", filter: "Android App Bundles" },
+  }[extension];
+  if (!artifactType) {
+    return {
+      success: false,
+      error: "Only APK and AAB artifacts can be downloaded.",
+    };
   }
   if (!(await fs.pathExists(sourcePath))) {
-    return { success: false, error: "The generated APK could not be found." };
+    return {
+      success: false,
+      error: "The generated artifact could not be found.",
+    };
   }
 
   const defaultPath = path.join(
     app.getPath("downloads"),
     path.basename(sourcePath),
   );
-  const automatedPath = process.env.PICO_AUTOMATED_DOWNLOAD_PATH;
+  const automatedPath =
+    extension === ".aab"
+      ? process.env.PICO_AUTOMATED_BUNDLE_DOWNLOAD_PATH
+      : process.env.PICO_AUTOMATED_DOWNLOAD_PATH;
   const selection = automatedPath
     ? { canceled: false, filePath: path.resolve(automatedPath) }
     : await dialog.showSaveDialog(mainWindow, {
-        title: "Download generated APK",
+        title: `Download generated ${artifactType.label}`,
         defaultPath,
-        buttonLabel: "Save APK",
-        filters: [{ name: "Android packages", extensions: ["apk"] }],
+        buttonLabel: `Save ${artifactType.label}`,
+        filters: [
+          { name: artifactType.filter, extensions: [extension.slice(1)] },
+        ],
       });
 
   if (selection.canceled || !selection.filePath) {
     return { success: false, canceled: true };
   }
 
-  const destinationPath = selection.filePath.toLowerCase().endsWith(".apk")
+  const destinationPath = selection.filePath.toLowerCase().endsWith(extension)
     ? selection.filePath
-    : `${selection.filePath}.apk`;
+    : `${selection.filePath}${extension}`;
   await fs.ensureDir(path.dirname(destinationPath));
   await fs.copy(sourcePath, destinationPath, { overwrite: true });
 
   return { success: true, path: destinationPath };
+}
+
+ipcMain.handle("download-apk", async (event, artifactPath) => {
+  return saveArtifact(artifactPath);
+});
+
+ipcMain.handle("download-artifact", async (event, artifactPath) => {
+  return saveArtifact(artifactPath);
 });
 
 ipcMain.handle("select-keystore", async () => {
@@ -145,6 +171,45 @@ ipcMain.handle("select-keystore", async () => {
     return { success: false, canceled: true };
   }
   return { success: true, path: selection.filePaths[0] };
+});
+
+ipcMain.handle("discover-keystore-aliases", async (event, options = {}) => {
+  const keystorePath = path.resolve(String(options.keystorePath || ""));
+  const storePassword = String(options.storePassword || "");
+  if (!options.keystorePath || !(await fs.pathExists(keystorePath))) {
+    return { success: false, error: "Select an existing keystore file first." };
+  }
+  if (!storePassword) {
+    return { success: false, needsPassword: true };
+  }
+
+  try {
+    const { stdout } = await execFileAsync(
+      "keytool",
+      [
+        "-J-Duser.language=en",
+        "-list",
+        "-v",
+        "-keystore",
+        keystorePath,
+        "-storepass:env",
+        "PICO_KEYSTORE_PASSWORD",
+      ],
+      {
+        env: { ...process.env, PICO_KEYSTORE_PASSWORD: storePassword },
+        maxBuffer: 1024 * 1024,
+      },
+    );
+    const aliases = [...stdout.matchAll(/^Alias name:\s*(.+)$/gim)]
+      .map((match) => match[1].trim())
+      .filter(Boolean);
+    return { success: true, aliases: [...new Set(aliases)] };
+  } catch {
+    return {
+      success: false,
+      error: "Could not read aliases. Check the keystore password.",
+    };
+  }
 });
 
 ipcMain.handle("copy-checksum", async (event, checksum) => {
@@ -316,6 +381,7 @@ ipcMain.handle("build-app", async (event, dir, buildOptions = {}) => {
     ["win", "mac", "linux"].includes(platform),
   );
   const hasNodeModules = fs.existsSync(path.join(dir, "node_modules"));
+  const includeBundle = Boolean(buildOptions.includeBundle);
   let releaseSigning = null;
   try {
     releaseSigning = normalizeReleaseSigning(buildOptions.releaseSigning);
@@ -330,6 +396,13 @@ ipcMain.handle("build-app", async (event, dir, buildOptions = {}) => {
     const message = "Release signing is available only for Android builds.";
     sendLog(message);
     emitStatus("release-signing", "failed", message);
+    return { success: false, error: message };
+  }
+  if (includeBundle && !releaseSigning) {
+    const message =
+      "Android App Bundle output requires a signed release APK build.";
+    sendLog(message);
+    emitStatus("app-bundle", "failed", message);
     return { success: false, error: message };
   }
 
@@ -435,8 +508,10 @@ ipcMain.handle("build-app", async (event, dir, buildOptions = {}) => {
     label: "APK compilation",
     completeMessage: `Gradle finished compiling the ${variant} APK.`,
   });
-  if (signingScriptPath) await fs.remove(signingScriptPath);
-  if (!gradleBuilt) return { success: false, error: "APK compilation failed." };
+  if (!gradleBuilt) {
+    if (signingScriptPath) await fs.remove(signingScriptPath);
+    return { success: false, error: "APK compilation failed." };
+  }
 
   const artifactPath = path.join(
     dir,
@@ -449,6 +524,7 @@ ipcMain.handle("build-app", async (event, dir, buildOptions = {}) => {
     `app-${variant}.apk`,
   );
   if (!fs.existsSync(artifactPath)) {
+    if (signingScriptPath) await fs.remove(signingScriptPath);
     const message = `APK compilation finished without producing app-${variant}.apk.`;
     sendLog(message);
     emitStatus("artifact", "failed", message);
@@ -457,6 +533,62 @@ ipcMain.handle("build-app", async (event, dir, buildOptions = {}) => {
 
   const checksum = await sha256(artifactPath);
   const artifactKind = releaseSigning ? "Signed release" : "Debug";
+  let bundlePath = null;
+  let bundleChecksum = null;
+  if (includeBundle) {
+    emitStatus(
+      "app-bundle",
+      "running",
+      "Compiling the signed Android App Bundle.",
+    );
+    const bundleBuilt = await runProcess(
+      gradleCommand,
+      ["-I", signingScriptPath, "bundleRelease"],
+      {
+        cwd: path.join(dir, "android"),
+        stage: "app-bundle",
+        label: "Android App Bundle compilation",
+        completeMessage:
+          "Gradle finished compiling the signed Android App Bundle.",
+      },
+    );
+    if (!bundleBuilt) {
+      if (signingScriptPath) await fs.remove(signingScriptPath);
+      return {
+        success: false,
+        error: "Android App Bundle compilation failed.",
+      };
+    }
+    bundlePath = path.join(
+      dir,
+      "android",
+      "app",
+      "build",
+      "outputs",
+      "bundle",
+      "release",
+      "app-release.aab",
+    );
+    if (!fs.existsSync(bundlePath)) {
+      if (signingScriptPath) await fs.remove(signingScriptPath);
+      const message =
+        "App Bundle compilation finished without producing app-release.aab.";
+      sendLog(message);
+      emitStatus("app-bundle", "failed", message);
+      return { success: false, error: message };
+    }
+    bundleChecksum = await sha256(bundlePath);
+    emitStatus(
+      "app-bundle",
+      "complete",
+      "Signed Android App Bundle is ready.",
+      {
+        bundlePath,
+        bundleChecksum,
+      },
+    );
+  }
+  if (signingScriptPath) await fs.remove(signingScriptPath);
   emitStatus(
     "artifact",
     "complete",
@@ -465,6 +597,8 @@ ipcMain.handle("build-app", async (event, dir, buildOptions = {}) => {
       artifactPath,
       artifactKind,
       checksum,
+      bundlePath,
+      bundleChecksum,
     },
   );
   emitStatus(
@@ -475,10 +609,19 @@ ipcMain.handle("build-app", async (event, dir, buildOptions = {}) => {
       artifactPath,
       artifactKind,
       checksum,
+      bundlePath,
+      bundleChecksum,
     },
   );
   sendLog(`${artifactKind} APK ready: ${artifactPath}`);
-  return { success: true, artifactPath, artifactKind, checksum };
+  return {
+    success: true,
+    artifactPath,
+    artifactKind,
+    checksum,
+    bundlePath,
+    bundleChecksum,
+  };
 });
 
 function normalizeReleaseSigning(releaseSigning) {

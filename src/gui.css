@@ -737,6 +737,14 @@ textarea:focus {
   margin-top: 0;
 }
 
+.aab-artifact {
+  border-top: 1px solid var(--border-color);
+  display: grid;
+  gap: 9px;
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
 .copy-checksum-btn {
   background: rgba(148, 163, 184, 0.12);
   border: 1px solid rgba(148, 163, 184, 0.3);
@@ -784,6 +792,14 @@ textarea:focus {
   font-family: var(--font-mono);
   font-size: 10px;
   overflow-wrap: anywhere;
+}
+
+.keystore-alias-status {
+  color: var(--text-help);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.45;
+  margin: 10px 0 0;
 }
 
 .keystore-grid {

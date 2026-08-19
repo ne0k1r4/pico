@@ -1,5 +1,7 @@
 # Android APK Capability
 
+- [x] Add automatic keystore alias discovery and optional signed App Bundle output, validate all Android artifact flows, and deliver the final history-preserving ZIP.
+
 - [x] Add custom-keystore release signing and an APK SHA-256 copy action, then validate both GUI build paths.
 
 - [x] Add in-interface APK download after a successful build and verify the full GUI generation, build, download, and inspection flow.

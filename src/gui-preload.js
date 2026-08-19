@@ -12,9 +12,13 @@ contextBridge.exposeInMainWorld("picoAPI", {
   buildApp: (dir, buildOptions) =>
     ipcRenderer.invoke("build-app", dir, buildOptions),
   selectKeystore: () => ipcRenderer.invoke("select-keystore"),
+  discoverKeystoreAliases: (options) =>
+    ipcRenderer.invoke("discover-keystore-aliases", options),
   copyChecksum: (checksum) => ipcRenderer.invoke("copy-checksum", checksum),
   downloadApk: (artifactPath) =>
     ipcRenderer.invoke("download-apk", artifactPath),
+  downloadArtifact: (artifactPath) =>
+    ipcRenderer.invoke("download-artifact", artifactPath),
   onLog: (callback) => {
     const subscription = (event, text) => callback(text);
     ipcRenderer.on("log", subscription);

@@ -23,7 +23,7 @@
           </div>
           <div class="brand-title">
             <h2>pico-chan</h2>
-            <span class="version-tag">v1.6.0</span>
+            <span class="version-tag">v1.7.0</span>
           </div>
         </div>
 
@@ -433,6 +433,7 @@
                           >Key alias<input
                             id="keystore-alias"
                             type="text"
+                            list="keystore-alias-suggestions"
                             autocomplete="off"
                         /></label>
                         <label
@@ -448,7 +449,28 @@
                             autocomplete="new-password"
                         /></label>
                       </div>
+                      <datalist id="keystore-alias-suggestions"></datalist>
+                      <p
+                        id="keystore-alias-status"
+                        class="keystore-alias-status"
+                      >
+                        Enter the keystore password to discover available
+                        aliases.
+                      </p>
                     </div>
+                    <label id="app-bundle-option" class="toggle-row" hidden>
+                      <input type="checkbox" id="includeAppBundle" />
+                      <span class="custom-toggle"></span>
+                      <div class="toggle-texts">
+                        <span class="title"
+                          >Create Android App Bundle (.aab)</span
+                        >
+                        <span class="desc"
+                          >Build a signed Play Store submission bundle alongside
+                          the release APK.</span
+                        >
+                      </div>
+                    </label>
                   </div>
                 </div>
               </div>
@@ -519,6 +541,9 @@
               <li data-stage="release-signing">
                 <span class="stage-marker"></span><span>Release signing</span>
               </li>
+              <li data-stage="app-bundle">
+                <span class="stage-marker"></span><span>App Bundle</span>
+              </li>
               <li data-stage="artifact">
                 <span class="stage-marker"></span><span>APK artifact</span>
               </li>
@@ -543,6 +568,28 @@
               </button>
             </div>
             <code id="apk-checksum" class="apk-checksum" hidden></code>
+            <div id="aab-artifact" class="aab-artifact" hidden>
+              <div id="aab-artifact-path" class="apk-artifact-path"></div>
+              <div class="apk-artifact-actions">
+                <button
+                  id="download-aab-btn"
+                  class="download-apk-btn"
+                  type="button"
+                  disabled
+                >
+                  Download App Bundle
+                </button>
+                <button
+                  id="copy-aab-checksum-btn"
+                  class="copy-checksum-btn"
+                  type="button"
+                  disabled
+                >
+                  Copy SHA-256
+                </button>
+              </div>
+              <code id="aab-checksum" class="apk-checksum"></code>
+            </div>
           </div>
           <div class="dev-terminal">
             <div class="terminal-bar">
@@ -664,7 +711,17 @@
       const keystoreAlias = document.getElementById("keystore-alias");
       const keystorePassword = document.getElementById("keystore-password");
       const keyPassword = document.getElementById("key-password");
+      const aliasSuggestions = document.getElementById(
+        "keystore-alias-suggestions",
+      );
+      const keystoreAliasStatus = document.getElementById(
+        "keystore-alias-status",
+      );
+      const appBundleOption = document.getElementById("app-bundle-option");
+      const includeAppBundleCheckbox =
+        document.getElementById("includeAppBundle");
       let selectedKeystorePath = "";
+      let aliasLookupTimer = null;
 
       injectCSSCheckbox.addEventListener("change", () => {
         cssBlock.classList.toggle("active", injectCSSCheckbox.checked);
@@ -693,6 +750,8 @@
         androidReleaseOptions.hidden = !buildsAndroid;
         if (!buildsAndroid) releaseApkCheckbox.checked = false;
         keystoreFields.hidden = !buildsAndroid || !releaseApkCheckbox.checked;
+        appBundleOption.hidden = !buildsAndroid || !releaseApkCheckbox.checked;
+        if (appBundleOption.hidden) includeAppBundleCheckbox.checked = false;
       }
 
       androidPlatformCheckbox.addEventListener(
@@ -708,7 +767,50 @@
         if (selection.success) {
           selectedKeystorePath = selection.path;
           keystorePathLabel.textContent = selection.path;
+          aliasSuggestions.replaceChildren();
+          keystoreAliasStatus.textContent = keystorePassword.value
+            ? "Looking up available aliases…"
+            : "Enter the keystore password to discover available aliases.";
+          if (keystorePassword.value) discoverKeystoreAliases();
         }
+      });
+
+      async function discoverKeystoreAliases() {
+        if (!selectedKeystorePath || !keystorePassword.value) return;
+        const result = await window.picoAPI.discoverKeystoreAliases({
+          keystorePath: selectedKeystorePath,
+          storePassword: keystorePassword.value,
+        });
+        if (!result.success) {
+          keystoreAliasStatus.textContent = result.needsPassword
+            ? "Enter the keystore password to discover available aliases."
+            : result.error || "No aliases could be discovered.";
+          return;
+        }
+        aliasSuggestions.replaceChildren(
+          ...result.aliases.map((alias) => {
+            const option = document.createElement("option");
+            option.value = alias;
+            return option;
+          }),
+        );
+        if (result.aliases.length === 1 && !keystoreAlias.value) {
+          keystoreAlias.value = result.aliases[0];
+        }
+        keystoreAliasStatus.textContent = result.aliases.length
+          ? `${result.aliases.length} alias${result.aliases.length === 1 ? "" : "es"} found. Select or enter the key alias.`
+          : "No aliases were found in this keystore.";
+      }
+
+      keystorePassword.addEventListener("input", () => {
+        clearTimeout(aliasLookupTimer);
+        if (!selectedKeystorePath || !keystorePassword.value) {
+          keystoreAliasStatus.textContent =
+            "Enter the keystore password to discover available aliases.";
+          return;
+        }
+        keystoreAliasStatus.textContent = "Looking up available aliases…";
+        aliasLookupTimer = setTimeout(discoverKeystoreAliases, 350);
       });
 
       function updateCLIPreview() {
@@ -805,11 +907,20 @@
       const downloadApkButton = document.getElementById("download-apk-btn");
       const copyChecksumButton = document.getElementById("copy-checksum-btn");
       const apkChecksum = document.getElementById("apk-checksum");
+      const aabArtifact = document.getElementById("aab-artifact");
+      const aabArtifactPath = document.getElementById("aab-artifact-path");
+      const downloadAabButton = document.getElementById("download-aab-btn");
+      const copyAabChecksumButton = document.getElementById(
+        "copy-aab-checksum-btn",
+      );
+      const aabChecksum = document.getElementById("aab-checksum");
       const terminalTitle = document.getElementById("terminal-title");
       const buildSpinner = document.getElementById("build-spinner");
       let apkArtifactSource = "";
       let apkArtifactKind = "Debug";
       let apkArtifactChecksum = "";
+      let aabArtifactSource = "";
+      let aabArtifactChecksum = "";
 
       function resetApkBuildStatus(showStatus) {
         apkBuildStatus.hidden = !showStatus;
@@ -828,6 +939,13 @@
         copyChecksumButton.textContent = "Copy SHA-256";
         apkChecksum.hidden = true;
         apkChecksum.textContent = "";
+        aabArtifact.hidden = true;
+        aabArtifactSource = "";
+        aabArtifactChecksum = "";
+        aabArtifactPath.textContent = "";
+        aabChecksum.textContent = "";
+        downloadAabButton.disabled = true;
+        copyAabChecksumButton.disabled = true;
         document.querySelectorAll(".apk-stage-list li").forEach((stage) => {
           stage.className = "";
         });
@@ -867,6 +985,15 @@
           copyChecksumButton.disabled = !apkArtifactChecksum;
           apkChecksum.textContent = `SHA-256: ${apkArtifactChecksum}`;
           apkChecksum.hidden = !apkArtifactChecksum;
+        }
+        if (status.bundlePath) {
+          aabArtifactSource = status.bundlePath;
+          aabArtifactChecksum = status.bundleChecksum || "";
+          aabArtifactPath.textContent = `AAB: ${status.bundlePath}`;
+          aabChecksum.textContent = `SHA-256: ${aabArtifactChecksum}`;
+          aabArtifact.hidden = false;
+          downloadAabButton.disabled = false;
+          copyAabChecksumButton.disabled = !aabArtifactChecksum;
         }
         if (status.state === "failed" || status.stage === "complete")
           buildSpinner.hidden = true;
@@ -985,7 +1112,7 @@
 
         downloadApkButton.disabled = true;
         downloadApkButton.textContent = "Saving APK…";
-        const result = await window.picoAPI.downloadApk(apkArtifactSource);
+        const result = await window.picoAPI.downloadArtifact(apkArtifactSource);
 
         if (result.success) {
           apkArtifactPath.textContent = `Saved APK: ${result.path}`;
@@ -1013,6 +1140,33 @@
         }, 1400);
       });
 
+      downloadAabButton.addEventListener("click", async () => {
+        if (!aabArtifactSource) return;
+        downloadAabButton.disabled = true;
+        downloadAabButton.textContent = "Saving App Bundle…";
+        const result = await window.picoAPI.downloadArtifact(aabArtifactSource);
+        if (result.success) {
+          aabArtifactPath.textContent = `Saved App Bundle: ${result.path}`;
+          downloadAabButton.textContent = "App Bundle Saved";
+        } else {
+          downloadAabButton.disabled = false;
+          downloadAabButton.textContent = result.canceled
+            ? "Download App Bundle"
+            : "Retry App Bundle Download";
+        }
+      });
+
+      copyAabChecksumButton.addEventListener("click", async () => {
+        if (!aabArtifactChecksum) return;
+        const result = await window.picoAPI.copyChecksum(aabArtifactChecksum);
+        copyAabChecksumButton.textContent = result.success
+          ? "Checksum Copied"
+          : "Copy Failed";
+        setTimeout(() => {
+          copyAabChecksumButton.textContent = "Copy SHA-256";
+        }, 1400);
+      });
+
       document
         .getElementById("build-installer-btn")
         .addEventListener("click", () => {
@@ -1026,6 +1180,9 @@
                   keyPassword: keyPassword.value || keystorePassword.value,
                 }
               : null;
+            const includeBundle = Boolean(
+              releaseSigning && includeAppBundleCheckbox.checked,
+            );
             if (releaseSigning) {
               // Credentials are handed to the one-time build only and are not retained in the UI.
               selectedKeystorePath = "";
@@ -1033,6 +1190,7 @@
               keystorePassword.value = "";
               keyPassword.value = "";
               releaseApkCheckbox.checked = false;
+              includeAppBundleCheckbox.checked = false;
               refreshAndroidReleaseControls();
             }
             logsConsole.innerHTML = "";
@@ -1041,7 +1199,7 @@
             switchActiveView("progress-view");
             attachBuildListeners();
             window.picoAPI
-              .buildApp(buildPath, { releaseSigning })
+              .buildApp(buildPath, { releaseSigning, includeBundle })
               .then((result) => {
                 statusMsg.textContent = result.success
                   ? "System: Complete"
