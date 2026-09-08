@@ -652,7 +652,7 @@ async function writeEphemeralSigningScript(signing) {
     app.getPath("temp"),
     `pico-signing-${crypto.randomUUID()}.gradle`,
   );
-  const script = `// Generated in a temporary directory and deleted after one build.\ngradle.beforeProject { picoApp ->\n  if (picoApp.path == ':app') {\n    picoApp.pluginManager.withPlugin('com.android.application') {\n      picoApp.android.signingConfigs.create('picoRelease') {\n        storeFile picoApp.file('${escapeGroovy(signing.keystorePath)}')\n        storePassword '${escapeGroovy(signing.storePassword)}'\n        keyAlias '${escapeGroovy(signing.keyAlias)}'\n        keyPassword '${escapeGroovy(signing.keyPassword)}'\n      }\n      picoApp.android.buildTypes.release.signingConfig = picoApp.android.signingConfigs.picoRelease\n    }\n  }\n}\n`;
+  const script = `gradle.beforeProject { picoApp ->\n  if (picoApp.path == ':app') {\n    picoApp.pluginManager.withPlugin('com.android.application') {\n      picoApp.android.signingConfigs.create('picoRelease') {\n        storeFile picoApp.file('${escapeGroovy(signing.keystorePath)}')\n        storePassword '${escapeGroovy(signing.storePassword)}'\n        keyAlias '${escapeGroovy(signing.keyAlias)}'\n        keyPassword '${escapeGroovy(signing.keyPassword)}'\n      }\n      picoApp.android.buildTypes.release.signingConfig = picoApp.android.signingConfigs.picoRelease\n    }\n  }\n}\n`;
   await fs.outputFile(scriptPath, script, { mode: 0o600 });
   return scriptPath;
 }
